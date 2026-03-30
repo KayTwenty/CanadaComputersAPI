@@ -1,4 +1,4 @@
-import Deals from './components/Deals';
+import StoreFilter from './components/StoreFilter';
 import { TbDeviceDesktop, TbExternalLink, TbArrowRight } from 'react-icons/tb';
 
 export default function Home() {
@@ -41,7 +41,7 @@ export default function Home() {
                             Best deals right now
                         </h2>
                         <p className="mt-2 text-slate-500 text-sm max-w-md">
-                            Prebuilt desktops on sale under $2,500, automatically sorted by biggest discount so the best value is always first.
+                            Prebuilt desktops on sale, sorted by biggest dollar savings first.
                         </p>
                     </div>
                     <a
@@ -58,7 +58,7 @@ export default function Home() {
 
             {/* Content */}
             <div className="max-w-7xl mx-auto w-full px-6 pb-16 flex-1">
-                <Deals />
+                <StoreFilter />
             </div>
 
             {/* Footer */}

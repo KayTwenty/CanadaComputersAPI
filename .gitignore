@@ -1,6 +1,7 @@
 env/
 __pycache__/
-frontend/cool/node_modules/
+*.db
+*/node_modules/
 
 # .vscode template
 .vscode/*

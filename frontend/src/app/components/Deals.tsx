@@ -14,8 +14,6 @@ interface Product {
     image_url: string;
 }
 
-const CACHE_KEY = 'desktop_deals_cache';
-const CACHE_TTL_MS = 30 * 60 * 1000;
 const CARD_WIDTH = 400;
 const GAP = 20;
 
@@ -25,7 +23,7 @@ function isAvailable(str: string): boolean {
     return s.includes('available') && !s.includes('not available');
 }
 
-export default function Deals() {
+export default function Deals({ storeId, storeName }: { storeId: number | null; storeName: string }) {
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoaded, setIsLoaded] = useState(false);
     const [error, setError] = useState<Error | null>(null);
@@ -33,28 +31,19 @@ export default function Deals() {
     const scrollRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        try {
-            const cached = JSON.parse(localStorage.getItem(CACHE_KEY) ?? 'null');
-            if (cached && cached.products.length > 0 && Date.now() - cached.timestamp < CACHE_TTL_MS) {
-                setProducts(cached.products);
-                setIsLoaded(true);
-                return;
-            }
-        } catch {
-            localStorage.removeItem(CACHE_KEY);
-        }
+        setIsLoaded(false);
+        setProducts([]);
+        setError(null);
+        setActiveIndex(0);
+        if (scrollRef.current) scrollRef.current.scrollLeft = 0;
 
-        fetch('http://127.0.0.1:5000/deals/desktops')
+        const url = storeId
+            ? `http://127.0.0.1:5000/deals/desktops?pickup=${storeId}`
+            : 'http://127.0.0.1:5000/deals/desktops';
+
+        fetch(url)
             .then(res => res.json())
             .then((data: { products: Product[] }) => {
-                if (data.products.length > 0) {
-                    try {
-                        localStorage.setItem(CACHE_KEY, JSON.stringify({
-                            timestamp: Date.now(),
-                            products: data.products,
-                        }));
-                    } catch {}
-                }
                 setProducts(data.products);
                 setIsLoaded(true);
             })
@@ -62,7 +51,7 @@ export default function Deals() {
                 setError(err);
                 setIsLoaded(true);
             });
-    }, []);
+    }, [storeId]);
 
     const isPausedRef = useRef(false);
     const autoScrollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -108,15 +97,26 @@ export default function Deals() {
 
     if (!isLoaded) {
         return (
-            <div className="flex gap-5 overflow-hidden">
-                {Array.from({ length: 4 }).map((_, i) => (
-                    <div key={i} className="flex-none bg-white rounded-3xl shadow-sm border border-slate-100 p-6 animate-pulse" style={{ width: CARD_WIDTH }}>
-                        <div className="bg-slate-100 rounded-2xl h-56 mb-6" />
-                        <div className="h-4 bg-slate-100 rounded w-3/4 mb-3" />
-                        <div className="h-4 bg-slate-100 rounded w-1/2 mb-6" />
-                        <div className="h-12 bg-slate-100 rounded-2xl w-full" />
-                    </div>
-                ))}
+            <div className="flex flex-col gap-4">
+                <div className="flex items-center gap-3 text-sm text-slate-500">
+                    <svg className="animate-spin h-4 w-4 text-violet-500 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                    </svg>
+                    {storeId
+                        ? `Fetching live inventory for ${storeName}…`
+                        : 'Loading deals…'}
+                </div>
+                <div className="flex gap-5 overflow-hidden">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="flex-none bg-white rounded-3xl shadow-sm border border-slate-100 p-6 animate-pulse" style={{ width: CARD_WIDTH }}>
+                            <div className="bg-slate-100 rounded-2xl h-56 mb-6" />
+                            <div className="h-4 bg-slate-100 rounded w-3/4 mb-3" />
+                            <div className="h-4 bg-slate-100 rounded w-1/2 mb-6" />
+                            <div className="h-12 bg-slate-100 rounded-2xl w-full" />
+                        </div>
+                    ))}
+                </div>
             </div>
         );
     }
@@ -165,8 +165,12 @@ export default function Deals() {
                             >
                                 {/* Image */}
                                 <div className="relative bg-slate-50 flex items-center justify-center h-60 p-6">
-                                    <span className="absolute top-4 left-4 bg-slate-900 text-white text-xs font-bold px-2.5 py-1 rounded-lg">
-                                        -{pct}% off
+                                    {/* Savings badge — primary sort signal */}
+                                    <span className="absolute top-4 left-4 bg-emerald-500 text-white text-sm font-extrabold px-3 py-1.5 rounded-xl shadow-sm">
+                                        Save ${savings}
+                                    </span>
+                                    <span className="absolute top-4 right-4 bg-slate-800/70 text-white text-xs font-semibold px-2 py-1 rounded-lg">
+                                        -{pct}%
                                     </span>
                                     {product.image_url ? (
                                         // eslint-disable-next-line @next/next/no-img-element
@@ -204,10 +208,11 @@ export default function Deals() {
                                         </div>
                                     </div>
 
-                                    {/* Savings pill */}
+                                    {/* Savings row */}
                                     <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-2.5">
                                         <TbTag size={15} className="text-emerald-600 shrink-0" />
-                                        <span className="text-sm font-bold text-emerald-700">You save ${savings}</span>
+                                        <span className="text-base font-extrabold text-emerald-700">You save ${savings}</span>
+                                        <span className="ml-auto text-xs font-semibold text-emerald-500">{pct}% off</span>
                                     </div>
 
                                     {/* Item code */}
