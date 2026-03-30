@@ -23,7 +23,15 @@ function isAvailable(str: string): boolean {
     return s.includes('available') && !s.includes('not available');
 }
 
-export default function Deals({ storeId, storeName }: { storeId: number | null; storeName: string }) {
+export default function Deals({
+    storeId = null,
+    storeName = 'All Stores',
+    baseUrl = 'http://127.0.0.1:5000/deals/desktops',
+}: {
+    storeId?: number | null;
+    storeName?: string;
+    baseUrl?: string;
+}) {
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoaded, setIsLoaded] = useState(false);
     const [error, setError] = useState<Error | null>(null);
@@ -39,8 +47,8 @@ export default function Deals({ storeId, storeName }: { storeId: number | null; 
         if (scrollRef.current) scrollRef.current.scrollLeft = 0;
 
         const url = storeId
-            ? `http://127.0.0.1:5000/deals/desktops?pickup=${storeId}`
-            : 'http://127.0.0.1:5000/deals/desktops';
+            ? `${baseUrl}?pickup=${storeId}`
+            : baseUrl;
 
         fetch(url)
             .then(res => res.json())
@@ -52,7 +60,7 @@ export default function Deals({ storeId, storeName }: { storeId: number | null; 
                 setError(err);
                 setIsLoaded(true);
             });
-    }, [storeId]);
+    }, [storeId, baseUrl]);
 
     // Reset carousel position when sort changes
     useEffect(() => {

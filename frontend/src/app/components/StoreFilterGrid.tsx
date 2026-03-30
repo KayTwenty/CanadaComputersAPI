@@ -5,7 +5,7 @@ import { TbMapPin, TbChevronDown } from 'react-icons/tb';
 import DealsGrid from './DealsGrid';
 import { STORES } from '../lib/stores';
 
-export default function StoreFilterGrid() {
+export default function StoreFilterGrid({ baseUrl }: { baseUrl?: string } = {}) {
     const [storeId, setStoreId] = useState<number | null>(null);
     const selected = STORES.find(s => s.id === storeId) ?? STORES[0];
 
@@ -50,7 +50,7 @@ export default function StoreFilterGrid() {
             </div>
 
             {/* Full grid */}
-            <DealsGrid storeId={storeId} storeName={selected.name} />
+            <DealsGrid storeId={storeId} storeName={selected.name} baseUrl={baseUrl} />
         </div>
     );
 }

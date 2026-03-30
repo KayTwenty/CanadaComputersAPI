@@ -13,13 +13,14 @@ import json
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-# ---------------------------------------------------------------------------
 # SQLite cache
-# ---------------------------------------------------------------------------
+
 _DB_PATH = os.path.join(os.path.dirname(__file__), '..', 'cache.db')
 _ALL_STORES_KEY = '__all__'
+_MEMORY_CACHE_KEY = '__memory__'
 _CACHE_TTL = 30 * 60          # 30 minutes for all-stores background refresh
 _STORE_CACHE_TTL = 30 * 60    # 30 minutes for per-store results too
+_MEMORY_CACHE_TTL = 30 * 60   # 30 minutes for memory deals
 _db_lock = threading.Lock()
 
 def _db_connect():
@@ -94,9 +95,8 @@ def _cache_set(store_key: str, products: list):
         finally:
             conn.close()
 
-# ---------------------------------------------------------------------------
 # Public cache helpers
-# ---------------------------------------------------------------------------
+
 VALID_STORE_IDS = {
     1, 2, 4, 67, 3, 56, 66, 57, 5, 60, 62, 8, 9, 11, 12, 75, 71, 68,
     17, 15, 46, 18, 64, 69, 23, 44, 20, 21, 73, 58, 26, 27, 72, 28, 29,
@@ -133,9 +133,8 @@ def get_cached_desktop_deals(store_id=None):
             _cache_set(store_key, result['products'])
         return result
 
-# ---------------------------------------------------------------------------
 # Background refresh — all-stores cache, runs every 30 minutes
-# ---------------------------------------------------------------------------
+
 _bg_fetching = False
 _bg_lock = threading.Lock()
 
@@ -213,18 +212,50 @@ def _background_loop():
         age = time.time() - row[0]
         remaining = _CACHE_TTL - age
         if remaining > 0:
-            print(f'[deals] Cache is fresh ({int(age)}s old). Pre-loading store locations; next full scrape in {int(remaining)}s.')
+            print(f'[deals] Cache is fresh ({int(age)}s old). Pre-loading store locations + memory; next full scrape in {int(remaining)}s.')
             _refresh_store_locations()
+            _refresh_memory()
             time.sleep(remaining)
 
     while True:
         _refresh_all_stores()
         _refresh_store_locations()
+        _refresh_memory()
         time.sleep(_CACHE_TTL)
+
+def _refresh_memory():
+    """Scrape and cache memory deals if stale."""
+    if _cache_get(_MEMORY_CACHE_KEY, _MEMORY_CACHE_TTL) is not None:
+        return
+    try:
+        print('[memory] Starting background scrape...')
+        result = memory_deals()
+        if result['products']:
+            _cache_set(_MEMORY_CACHE_KEY, result['products'])
+        print(f"[memory] Done. {len(result['products'])} deals cached.")
+    except Exception as e:
+        print(f'[memory] Background scrape failed: {e}')
 
 def start_deals_refresh():
     t = threading.Thread(target=_background_loop, daemon=True)
     t.start()
+
+def get_cached_memory_deals(store_id=None):
+    store_key = _MEMORY_CACHE_KEY if store_id is None else f'mem_{store_id}'
+    products = _cache_get(store_key, _MEMORY_CACHE_TTL)
+    if products is not None:
+        return {'products': products}
+    lock = _get_scrape_lock(store_key)
+    with lock:
+        products = _cache_get(store_key, _MEMORY_CACHE_TTL)
+        if products is not None:
+            return {'products': products}
+        result = memory_deals(store_id=store_id)
+        if result['products']:
+            _cache_set(store_key, result['products'])
+        return result
+
+MAX_PAGES = 10  # hard cap per category to avoid runaway scrapes
 
 USER_AGENTS = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
@@ -263,7 +294,7 @@ def product_search(search_string, low, high):
 
     page = 1
 
-    while True:
+    while page <= MAX_PAGES:
         search = quote_plus(search_string)
         url = generate_search_url(search, page)
 
@@ -338,7 +369,7 @@ def desktop_deals(store_id=None):
     output = {'products': []}
     page = 1
 
-    while True:
+    while page <= MAX_PAGES:
         url = f'https://www.canadacomputers.com/en/931/desktop-computers?page={page}'
         if store_id is not None:
             url += f'&pickup={store_id}'
@@ -365,6 +396,88 @@ def desktop_deals(store_id=None):
             regular_price = desc_div.get('data-regular_price', price)
 
             # Only include items actually on sale
+            if price == regular_price:
+                continue
+
+            title_tag = product.find('h2', class_='product-title')
+            if not title_tag:
+                continue
+            a_tag = title_tag.find('a')
+            title = a_tag.text.strip()
+            link = a_tag['href']
+
+            avail_div = product.find('div', class_='available-tag')
+            if avail_div:
+                smalls = avail_div.find_all('small', class_='pq-hdr-bolder')
+                online_availability = smalls[0].get_text(strip=True) if len(smalls) > 0 else 'unknown'
+                instore_availability = smalls[1].get_text(strip=True) if len(smalls) > 1 else 'unknown'
+            else:
+                online_availability = 'unknown'
+                instore_availability = 'unknown'
+
+            # When filtering by a specific store, skip products not in stock there
+            if store_id is not None:
+                instore_lower = instore_availability.lower()
+                if 'not available' in instore_lower or instore_lower == 'unknown':
+                    continue
+
+            img_tag = thumb.find('img') if thumb else None
+            image_url = img_tag.get('data-cc-src') or img_tag.get('src', '') if img_tag else ''
+
+            output['products'].append({
+                'title': title,
+                'price': price,
+                'regular_price': regular_price,
+                'item_code': item_code,
+                'online_availability': online_availability,
+                'instore_availability': instore_availability,
+                'link': link,
+                'image_url': image_url,
+            })
+
+        page += 1
+
+    def savings_dollars(p):
+        try:
+            sale = float(p['price'].replace('$', '').replace(',', ''))
+            reg = float(p['regular_price'].replace('$', '').replace(',', ''))
+            return reg - sale
+        except (ValueError, AttributeError):
+            return 0
+
+    output['products'].sort(key=savings_dollars, reverse=True)
+    return output
+
+
+def memory_deals(store_id=None):
+    """Scrape on-sale memory/RAM products from Canada Computers."""
+    output = {'products': []}
+    page = 1
+
+    while page <= MAX_PAGES:
+        url = f'https://www.canadacomputers.com/en/1009/memory?page={page}'
+        if store_id is not None:
+            url += f'&pickup={store_id}'
+        print(url)
+        data = fetch_page(url, fast=store_id is not None)
+        soup = BeautifulSoup(data, 'html.parser')
+
+        products = soup.find_all('article', class_='product-miniature')
+        if not products:
+            break
+
+        for product in products:
+            thumb = product.find('a', class_='product-thumbnail')
+            item_code = thumb.get('data-id', '') if thumb else ''
+
+            desc_div = product.find('div', class_='product-description')
+            if not desc_div:
+                continue
+
+            price = desc_div.get('data-price', 'N/A')
+            regular_price = desc_div.get('data-regular_price', price)
+
+            # Only on-sale items
             if price == regular_price:
                 continue
 

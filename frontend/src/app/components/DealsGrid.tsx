@@ -26,7 +26,9 @@ const savingsAmt = (p: Product) => {
     return reg - price(p);
 };
 
-export default function DealsGrid({ storeId, storeName }: { storeId: number | null; storeName: string }) {
+const DEFAULT_BASE_URL = 'http://127.0.0.1:5000/deals/desktops';
+
+export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_URL }: { storeId: number | null; storeName: string; baseUrl?: string }) {
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoaded, setIsLoaded] = useState(false);
     const [error, setError] = useState<Error | null>(null);
@@ -37,9 +39,7 @@ export default function DealsGrid({ storeId, storeName }: { storeId: number | nu
         setProducts([]);
         setError(null);
 
-        const url = storeId
-            ? `http://127.0.0.1:5000/deals/desktops?pickup=${storeId}`
-            : 'http://127.0.0.1:5000/deals/desktops';
+        const url = storeId ? `${baseUrl}?pickup=${storeId}` : baseUrl;
 
         fetch(url)
             .then(res => res.json())
@@ -51,7 +51,7 @@ export default function DealsGrid({ storeId, storeName }: { storeId: number | nu
                 setError(err);
                 setIsLoaded(true);
             });
-    }, [storeId]);
+    }, [storeId, baseUrl]);
 
     const sortedProducts = useMemo(() => {
         const copy = [...products];

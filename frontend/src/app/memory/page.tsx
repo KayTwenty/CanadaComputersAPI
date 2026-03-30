@@ -1,10 +1,10 @@
 'use client';
 
-import { TbArrowLeft, TbDeviceDesktop } from 'react-icons/tb';
+import { TbArrowLeft, TbCpu } from 'react-icons/tb';
 import { useStore } from '../contexts/StoreContext';
 import DealsGrid from '../components/DealsGrid';
 
-export default function DesktopsPage() {
+export default function MemoryPage() {
     const { storeId, selectedStore } = useStore();
     return (
         <>
@@ -16,20 +16,24 @@ export default function DesktopsPage() {
                     <TbArrowLeft size={13} />
                     Back to highlights
                 </a>
-                <p className="text-sm font-semibold text-violet-600 mb-1 flex items-center gap-1.5">
-                    <TbDeviceDesktop size={14} />
-                    All deals
+                <p className="text-sm font-semibold text-blue-600 mb-1 flex items-center gap-1.5">
+                    <TbCpu size={14} />
+                    Memory
                 </p>
                 <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                    Desktop storefront
+                    RAM storefront
                 </h2>
                 <p className="mt-2 text-slate-500 text-sm max-w-md">
-                    Every prebuilt desktop currently on sale at Canada Computers.
+                    Every memory kit currently on sale at Canada Computers.
                     {storeId !== null && <> Showing results for <span className="font-semibold text-slate-700">{selectedStore.name}</span>.</>}
                 </p>
             </div>
             <div className="max-w-7xl mx-auto w-full px-6 pb-16 flex-1">
-                <DealsGrid storeId={storeId} storeName={selectedStore.name} />
+                <DealsGrid
+                    storeId={storeId}
+                    storeName={selectedStore.name}
+                    baseUrl="http://127.0.0.1:5000/deals/memory"
+                />
             </div>
         </>
     );
