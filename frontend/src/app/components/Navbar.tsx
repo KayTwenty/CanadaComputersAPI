@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import {
     TbDeviceDesktop, TbExternalLink, TbMapPin,
-    TbCurrentLocation, TbChevronDown, TbX, TbCheck, TbRefresh, TbCpu,
+    TbCurrentLocation, TbChevronDown, TbX, TbCheck, TbRefresh, TbCpu, TbCpu2,
 } from 'react-icons/tb';
 import { useStore } from '../contexts/StoreContext';
 import { STORES, distanceBetween, type StoreEntry } from '../lib/stores';
@@ -87,6 +87,8 @@ export default function Navbar() {
 
     const browseSrc = pathname === '/memory'
         ? 'https://www.canadacomputers.com/en/1009/memory'
+        : pathname === '/cpu'
+        ? 'https://www.canadacomputers.com/en/956/cpu'
         : 'https://www.canadacomputers.com/en/931/desktop-computers';
 
     return (
@@ -111,6 +113,10 @@ export default function Navbar() {
                             <a href="/memory" className={navCls('/memory')}>
                                 <TbCpu size={14} />
                                 Memory
+                            </a>
+                            <a href="/cpu" className={navCls('/cpu')}>
+                                <TbCpu2 size={14} />
+                                Processors
                             </a>
                         </div>
                     </div>

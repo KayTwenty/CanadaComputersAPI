@@ -145,12 +145,6 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
                         >
                             {/* Image */}
                             <div className="relative bg-slate-50 flex items-center justify-center h-52 p-5">
-                                <span className="absolute top-3 left-3 bg-emerald-500 text-white text-xs font-extrabold px-2.5 py-1 rounded-xl shadow-sm">
-                                    Save ${savings}
-                                </span>
-                                <span className="absolute top-3 right-3 bg-slate-800/70 text-white text-xs font-semibold px-2 py-1 rounded-lg">
-                                    -{pct}%
-                                </span>
                                 {product.image_url ? (
                                     // eslint-disable-next-line @next/next/no-img-element
                                     <img
