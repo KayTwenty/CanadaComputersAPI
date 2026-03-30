@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { TbTag, TbWorld, TbBuildingStore, TbChevronLeft, TbChevronRight } from 'react-icons/tb';
 
 interface Product {
@@ -28,6 +28,7 @@ export default function Deals({ storeId, storeName }: { storeId: number | null; 
     const [isLoaded, setIsLoaded] = useState(false);
     const [error, setError] = useState<Error | null>(null);
     const [activeIndex, setActiveIndex] = useState(0);
+    const [sort, setSort] = useState<'savings' | 'price-asc' | 'price-desc'>('savings');
     const scrollRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -52,6 +53,27 @@ export default function Deals({ storeId, storeName }: { storeId: number | null; 
                 setIsLoaded(true);
             });
     }, [storeId]);
+
+    // Reset carousel position when sort changes
+    useEffect(() => {
+        setActiveIndex(0);
+        if (scrollRef.current) scrollRef.current.scrollLeft = 0;
+    }, [sort]);
+
+    const price = (p: Product) => parseFloat(p.price.replace(/[$,]/g, ''));
+    const savings = (p: Product) => {
+        const reg = parseFloat(p.regular_price.replace(/[$,]/g, ''));
+        return reg - price(p);
+    };
+
+    const sortedProducts = useMemo(() => {
+        const copy = [...products];
+        if (sort === 'price-asc') copy.sort((a, b) => price(a) - price(b));
+        else if (sort === 'price-desc') copy.sort((a, b) => price(b) - price(a));
+        else copy.sort((a, b) => savings(b) - savings(a));
+        return copy;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [products, sort]);
 
     const isPausedRef = useRef(false);
     const autoScrollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -79,7 +101,7 @@ export default function Deals({ storeId, storeName }: { storeId: number | null; 
 
     // Auto-scroll: advance one card every 3s, loop back to start
     useEffect(() => {
-        if (products.length === 0) return;
+        if (sortedProducts.length === 0) return;
         autoScrollRef.current = setInterval(() => {
             if (isPausedRef.current || !scrollRef.current) return;
             const el = scrollRef.current;
@@ -91,7 +113,7 @@ export default function Deals({ storeId, storeName }: { storeId: number | null; 
             }
         }, 3000);
         return () => { if (autoScrollRef.current) clearInterval(autoScrollRef.current); };
-    }, [products.length]);
+    }, [sortedProducts.length]);
 
     if (error) return <p className="text-red-500 p-4">Error loading deals: {error.message}</p>;
 
@@ -125,8 +147,32 @@ export default function Deals({ storeId, storeName }: { storeId: number | null; 
         return <p className="text-slate-500 p-4">Deals are being fetched in the background — refresh in a moment.</p>;
     }
 
+    const SORT_OPTIONS: { key: typeof sort; label: string }[] = [
+        { key: 'savings',    label: 'Best Savings' },
+        { key: 'price-asc',  label: 'Price: Low → High' },
+        { key: 'price-desc', label: 'Price: High → Low' },
+    ];
+
     return (
         <div className="flex flex-col gap-4">
+            {/* Sort controls */}
+            <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-medium text-slate-400 mr-1">Sort by</span>
+                {SORT_OPTIONS.map(opt => (
+                    <button
+                        key={opt.key}
+                        onClick={() => setSort(opt.key)}
+                        className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-all ${
+                            sort === opt.key
+                                ? 'bg-slate-800 text-white border-slate-800'
+                                : 'bg-white text-slate-500 border-slate-200 hover:border-slate-400 hover:text-slate-700'
+                        }`}
+                    >
+                        {opt.label}
+                    </button>
+                ))}
+            </div>
+
             {/* Carousel + arrows */}
             <div className="relative">
                 {/* Left arrow */}
@@ -143,10 +189,12 @@ export default function Deals({ storeId, storeName }: { storeId: number | null; 
                 <div
                     ref={scrollRef}
                     onScroll={handleScroll}
+                    onMouseEnter={() => { isPausedRef.current = true; }}
+                    onMouseLeave={() => { isPausedRef.current = false; }}
                     className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth"
                     style={{ gap: GAP, scrollbarWidth: 'none', paddingBottom: 4 }}
                 >
-                    {products.map(product => {
+                    {sortedProducts.map(product => {
                         const sale = parseFloat(product.price.replace(/[$,]/g, ''));
                         const reg = parseFloat(product.regular_price.replace(/[$,]/g, ''));
                         const savings = (reg - sale).toFixed(2);
@@ -248,7 +296,7 @@ export default function Deals({ storeId, storeName }: { storeId: number | null; 
 
             {/* Dots */}
             <div className="flex justify-center items-center gap-1.5 pt-2">
-                {products.map((_, i) => (
+                {sortedProducts.map((_, i) => (
                     <button
                         key={i}
                         onClick={() => scrollToIndex(i)}
@@ -263,7 +311,7 @@ export default function Deals({ storeId, storeName }: { storeId: number | null; 
             </div>
 
             <p className="text-center text-xs text-slate-400">
-                {activeIndex + 1} / {products.length}
+                {activeIndex + 1} / {sortedProducts.length}
             </p>
         </div>
     );

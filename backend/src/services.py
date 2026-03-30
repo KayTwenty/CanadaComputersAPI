@@ -11,6 +11,7 @@ import threading
 import sqlite3
 import json
 import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # ---------------------------------------------------------------------------
 # SQLite cache
@@ -47,6 +48,39 @@ def _cache_get(store_key: str, ttl: float):
     if row and time.time() - row[1] < ttl:
         return json.loads(row[0])
     return None
+
+def cache_status():
+    """Return a status dict covering all cached keys."""
+    now = time.time()
+    with _db_lock:
+        conn = _db_connect()
+        try:
+            rows = conn.execute('SELECT store_key, scraped_at, LENGTH(products) FROM deals_cache').fetchall()
+        finally:
+            conn.close()
+
+    entries = []
+    for store_key, scraped_at, byte_len in rows:
+        age = int(now - scraped_at)
+        ttl = _CACHE_TTL if store_key == _ALL_STORES_KEY else _STORE_CACHE_TTL
+        entries.append({
+            'store_key': store_key,
+            'age_seconds': age,
+            'expires_in_seconds': max(0, int(ttl - age)),
+            'fresh': age < ttl,
+            'cached_bytes': byte_len,
+        })
+
+    entries.sort(key=lambda e: e['store_key'])
+    all_stores_entry = next((e for e in entries if e['store_key'] == _ALL_STORES_KEY), None)
+    store_entries = [e for e in entries if e['store_key'] != _ALL_STORES_KEY]
+
+    return {
+        'all_stores': all_stores_entry,
+        'store_count_cached': len(store_entries),
+        'store_count_total': len(VALID_STORE_IDS),
+        'stores': store_entries,
+    }
 
 def _cache_set(store_key: str, products: list):
     with _db_lock:
@@ -123,10 +157,69 @@ def _refresh_all_stores():
         with _bg_lock:
             _bg_fetching = False
 
+_PRELOAD_WORKERS = 4  # parallel store scrapers
+
+def _preload_one_store(store_id: int) -> bool:
+    """Scrape and cache a single store. Returns True if newly cached."""
+    store_key = str(store_id)
+    lock = _get_scrape_lock(store_key)
+    with lock:
+        if _cache_get(store_key, _STORE_CACHE_TTL) is not None:
+            return False  # already fresh — nothing to do
+        result = desktop_deals(store_id=store_id)
+        if result['products']:
+            _cache_set(store_key, result['products'])
+            return True
+        return False
+
+def _refresh_store_locations():
+    """Scrape and cache deals for every store location that isn't already fresh, using a thread pool."""
+    to_scrape = [sid for sid in VALID_STORE_IDS
+                 if _cache_get(str(sid), _STORE_CACHE_TTL) is None]
+    if not to_scrape:
+        print('[deals] All store locations already cached — nothing to pre-load.')
+        return
+    print(f'[deals] Pre-loading {len(to_scrape)} store location(s) with {_PRELOAD_WORKERS} workers...')
+    loaded = 0
+    with ThreadPoolExecutor(max_workers=_PRELOAD_WORKERS) as pool:
+        futures = {pool.submit(_preload_one_store, sid): sid for sid in to_scrape}
+        for future in as_completed(futures):
+            sid = futures[future]
+            try:
+                if future.result():
+                    loaded += 1
+            except Exception as e:
+                print(f'[deals] Store {sid} pre-load failed: {e}')
+    print(f'[deals] Pre-loaded {loaded}/{len(to_scrape)} store location(s).')
+
 def _background_loop():
-    """Run immediately, then repeat every 30 minutes."""
+    """
+    On startup: if the all-stores cache is still fresh, pre-load any stale per-store
+    caches and wait out the remaining TTL. Otherwise scrape everything now.
+    Repeats every 30 minutes.
+    """
+    # One-time startup check — use existing cache if still fresh
+    with _db_lock:
+        conn = _db_connect()
+        try:
+            row = conn.execute(
+                'SELECT scraped_at FROM deals_cache WHERE store_key = ?',
+                (_ALL_STORES_KEY,)
+            ).fetchone()
+        finally:
+            conn.close()
+
+    if row:
+        age = time.time() - row[0]
+        remaining = _CACHE_TTL - age
+        if remaining > 0:
+            print(f'[deals] Cache is fresh ({int(age)}s old). Pre-loading store locations; next full scrape in {int(remaining)}s.')
+            _refresh_store_locations()
+            time.sleep(remaining)
+
     while True:
         _refresh_all_stores()
+        _refresh_store_locations()
         time.sleep(_CACHE_TTL)
 
 def start_deals_refresh():
@@ -141,16 +234,26 @@ USER_AGENTS = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Edge/124.0.0.0 Safari/537.36',
 ]
 
-def fetch_page(url, fast=False):
-    """Fetch a URL with a random User-Agent and a random delay to avoid rate limiting."""
+def fetch_page(url, fast=False, retries=3):
+    """Fetch a URL with a random User-Agent, a random delay, and up to `retries` attempts."""
     time.sleep(random.uniform(0.4, 0.9) if fast else random.uniform(1.5, 3.5))
     headers = {
         'User-Agent': random.choice(USER_AGENTS),
         'Accept-Language': 'en-CA,en;q=0.9',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
     }
-    req = Request(url, headers=headers)
-    return urlopen(req).read().decode()
+    last_exc = None
+    for attempt in range(1, retries + 1):
+        try:
+            req = Request(url, headers=headers)
+            return urlopen(req).read().decode()
+        except Exception as e:
+            last_exc = e
+            if attempt < retries:
+                backoff = 2 ** attempt + random.uniform(0, 1)
+                print(f'[deals] fetch_page attempt {attempt} failed ({e}). Retrying in {backoff:.1f}s...')
+                time.sleep(backoff)
+    raise last_exc
 
 def generate_search_url(s, page):
     return f'https://www.canadacomputers.com/en/search?s={s}&page={page}'

@@ -1,7 +1,12 @@
-import StoreFilter from './components/StoreFilter';
-import { TbDeviceDesktop, TbExternalLink, TbArrowRight } from 'react-icons/tb';
+import StoreFilterGrid from '../components/StoreFilterGrid';
+import { TbDeviceDesktop, TbExternalLink, TbArrowLeft } from 'react-icons/tb';
 
-export default function Home() {
+export const metadata = {
+    title: 'All Desktop Deals — DesktopDeals',
+    description: 'Browse every prebuilt desktop deal from Canada Computers, sorted and filtered by store location.',
+};
+
+export default function DesktopsPage() {
     return (
         <div className="min-h-screen bg-slate-50 flex flex-col">
             {/* Header */}
@@ -36,27 +41,27 @@ export default function Home() {
             <div className="max-w-7xl mx-auto w-full px-6 pt-12 pb-8">
                 <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
                     <div>
-                        <p className="text-sm font-semibold text-violet-600 mb-1">Curated picks</p>
+                        <a
+                            href="/"
+                            className="inline-flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-slate-700 mb-3 transition-colors"
+                        >
+                            <TbArrowLeft size={13} />
+                            Back to highlights
+                        </a>
+                        <p className="text-sm font-semibold text-violet-600 mb-1">All deals</p>
                         <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-                            Best deals right now
+                            Desktop storefront
                         </h2>
                         <p className="mt-2 text-slate-500 text-sm max-w-md">
-                            Prebuilt desktops on sale, sorted by biggest dollar savings first.
+                            Every prebuilt desktop currently on sale at Canada Computers. Filter by your nearest store.
                         </p>
                     </div>
-                    <a
-                        href="/desktops"
-                        className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-600 hover:text-slate-900 transition-colors shrink-0"
-                    >
-                        View all desktops
-                        <TbArrowRight size={16} />
-                    </a>
                 </div>
             </div>
 
             {/* Content */}
             <div className="max-w-7xl mx-auto w-full px-6 pb-16 flex-1">
-                <StoreFilter />
+                <StoreFilterGrid />
             </div>
 
             {/* Footer */}

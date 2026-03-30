@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_restful import Api
 
-from endpoints import Search, DesktopDeals
+from endpoints import Search, DesktopDeals, CacheStatus
 from services import start_deals_refresh
 
 app = Flask(__name__)
@@ -9,6 +9,7 @@ api = Api(app)
 
 api.add_resource(Search, '/search/<string:search_string>')
 api.add_resource(DesktopDeals, '/deals/desktops')
+api.add_resource(CacheStatus, '/status')
 
 # Start background scrape when the server process loads
 start_deals_refresh()

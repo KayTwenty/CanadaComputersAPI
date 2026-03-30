@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import { TbMapPin, TbChevronDown } from 'react-icons/tb';
-import Deals from './Deals';
+import DealsGrid from './DealsGrid';
 import { STORES } from '../lib/stores';
 
-export default function StoreFilter() {
+export default function StoreFilterGrid() {
     const [storeId, setStoreId] = useState<number | null>(null);
     const selected = STORES.find(s => s.id === storeId) ?? STORES[0];
 
@@ -49,8 +49,8 @@ export default function StoreFilter() {
                 )}
             </div>
 
-            {/* Deals carousel */}
-            <Deals storeId={storeId} storeName={selected.name} />
+            {/* Full grid */}
+            <DealsGrid storeId={storeId} storeName={selected.name} />
         </div>
     );
 }

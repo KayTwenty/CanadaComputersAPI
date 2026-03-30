@@ -1,6 +1,14 @@
 from flask_restful import Resource
 from flask import jsonify, request
-from services import product_search, get_cached_desktop_deals, VALID_STORE_IDS
+from services import product_search, get_cached_desktop_deals, cache_status, VALID_STORE_IDS
+
+
+class CacheStatus(Resource):
+    def get(self):
+        resp = jsonify(cache_status())
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        resp.status_code = 200
+        return resp
 
 
 class Search(Resource):
