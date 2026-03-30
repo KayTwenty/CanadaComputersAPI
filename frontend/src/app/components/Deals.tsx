@@ -64,6 +64,9 @@ export default function Deals() {
             });
     }, []);
 
+    const isPausedRef = useRef(false);
+    const autoScrollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
     const handleScroll = useCallback(() => {
         if (!scrollRef.current) return;
         const idx = Math.round(scrollRef.current.scrollLeft / (CARD_WIDTH + GAP));
@@ -74,8 +77,32 @@ export default function Deals() {
         scrollRef.current?.scrollTo({ left: index * (CARD_WIDTH + GAP), behavior: 'smooth' });
     };
 
-    const prev = () => scrollToIndex(Math.max(0, activeIndex - 1));
-    const next = () => scrollToIndex(Math.min(products.length - 1, activeIndex + 1));
+    const prev = () => {
+        isPausedRef.current = true;
+        scrollToIndex(Math.max(0, activeIndex - 1));
+        setTimeout(() => { isPausedRef.current = false; }, 6000);
+    };
+    const next = () => {
+        isPausedRef.current = true;
+        scrollToIndex(Math.min(products.length - 1, activeIndex + 1));
+        setTimeout(() => { isPausedRef.current = false; }, 6000);
+    };
+
+    // Auto-scroll: advance one card every 3s, loop back to start
+    useEffect(() => {
+        if (products.length === 0) return;
+        autoScrollRef.current = setInterval(() => {
+            if (isPausedRef.current || !scrollRef.current) return;
+            const el = scrollRef.current;
+            const maxScroll = el.scrollWidth - el.clientWidth;
+            if (el.scrollLeft >= maxScroll - 4) {
+                el.scrollTo({ left: 0, behavior: 'smooth' });
+            } else {
+                el.scrollBy({ left: CARD_WIDTH + GAP, behavior: 'smooth' });
+            }
+        }, 3000);
+        return () => { if (autoScrollRef.current) clearInterval(autoScrollRef.current); };
+    }, [products.length]);
 
     if (error) return <p className="text-red-500 p-4">Error loading deals: {error.message}</p>;
 
