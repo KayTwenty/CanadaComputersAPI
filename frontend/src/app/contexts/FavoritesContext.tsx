@@ -20,12 +20,7 @@ interface FavoritesCtx {
     clearAll: () => void;
 }
 
-const Ctx = createContext<FavoritesCtx>({
-    favorites: [],
-    isFavorited: () => false,
-    toggle: () => {},
-    clearAll: () => {},
-});
+const Ctx = createContext<FavoritesCtx | null>(null);
 
 const STORAGE_KEY = 'ccdeals_favorites';
 
@@ -70,5 +65,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useFavorites() {
-    return useContext(Ctx);
+    const ctx = useContext(Ctx);
+    if (!ctx) throw new Error('useFavorites must be used inside <FavoritesProvider>');
+    return ctx;
 }

@@ -16,7 +16,7 @@ export async function GET(
     if (price_max) upstream.searchParams.set('price_max', price_max);
 
     try {
-        const res = await fetch(upstream.toString(), { cache: 'no-store' });
+        const res = await fetch(upstream.toString(), { cache: 'no-store', signal: AbortSignal.timeout(30000) });
         const data = await res.json();
         return NextResponse.json(data);
     } catch {

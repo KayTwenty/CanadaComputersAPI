@@ -148,6 +148,12 @@ def get_cached_desktop_deals(store_id=None):
         result = desktop_deals(store_id=store_id)
         if result['products']:
             _cache_set(store_key, result['products'])
+            return result
+        # Per-store returned nothing — fall back to global cache
+        if store_id is not None:
+            global_products = _cache_get(_ALL_STORES_KEY, _CACHE_TTL)
+            if global_products:
+                return {'products': global_products}
         return result
 
 # Background refresh — all-stores cache, runs every 30 minutes
@@ -230,12 +236,14 @@ def _background_loop():
         remaining = _CACHE_TTL - age
         if remaining > 0:
             print(f'[deals] Cache is fresh ({int(age)}s old). Pre-loading store locations + categories; next full scrape in {int(remaining)}s.')
+            preload_start = time.time()
             _refresh_store_locations()
             with ThreadPoolExecutor(max_workers=3) as pool:
                 pool.submit(_refresh_memory)
                 pool.submit(_refresh_cpu)
                 pool.submit(_refresh_gpu)
-            time.sleep(remaining)
+            elapsed = time.time() - preload_start
+            time.sleep(max(0, remaining - elapsed))
 
     while True:
         _refresh_all_stores()
@@ -435,10 +443,12 @@ def product_search(search_string, low, high):
                 instore_availability = 'unknown'
 
             # Client-side price range filtering
-            if low is not None and high is not None:
+            if low is not None or high is not None:
                 try:
                     price_val = float(price.replace('$', '').replace(',', ''))
-                    if not (float(low) <= price_val <= float(high)):
+                    if low is not None and price_val < float(low):
+                        continue
+                    if high is not None and price_val > float(high):
                         continue
                 except (ValueError, AttributeError):
                     pass

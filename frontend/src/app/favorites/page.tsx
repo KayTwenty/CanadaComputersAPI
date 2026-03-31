@@ -1,6 +1,6 @@
 'use client';
 
-import { TbHeart, TbArrowLeft, TbTrash, TbExternalLink, TbTag, TbWorld, TbBuildingStore } from 'react-icons/tb';
+import { TbHeart, TbArrowLeft, TbTrash, TbTag, TbWorld, TbBuildingStore } from 'react-icons/tb';
 import { useFavorites } from '../contexts/FavoritesContext';
 import FavoriteButton from '../components/FavoriteButton';
 import ShareButton from '../components/ShareButton';
