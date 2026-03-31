@@ -41,6 +41,10 @@ export default function Deals({
     const [sort, setSort] = useState<'savings' | 'price-asc' | 'price-desc'>('savings');
     const [cardWidth, setCardWidth] = useState(DESKTOP_CARD_WIDTH);
     const scrollRef = useRef<HTMLDivElement>(null);
+    const [fetchKey, setFetchKey] = useState(0);
+    const retryCountRef = useRef(0);
+    const lastStoreKeyRef = useRef('');
+    const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Responsive card width: full-ish on mobile, fixed on desktop
     useEffect(() => {
@@ -53,6 +57,13 @@ export default function Deals({
     }, []);
 
     useEffect(() => {
+        const storeKey = `${storeId}|${baseUrl}`;
+        if (storeKey !== lastStoreKeyRef.current) {
+            retryCountRef.current = 0;
+            lastStoreKeyRef.current = storeKey;
+        }
+        if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+
         setIsLoaded(false);
         setProducts([]);
         setOffline(false);
@@ -67,7 +78,16 @@ export default function Deals({
 
         fetch(url, { signal: controller.signal })
             .then(res => {
-                if (!res.ok) { setOffline(true); setIsLoaded(true); return null; }
+                if (!res.ok) {
+                    if (retryCountRef.current < 3) {
+                        retryCountRef.current++;
+                        retryTimerRef.current = setTimeout(() => setFetchKey(k => k + 1), 20000);
+                    } else {
+                        setOffline(true);
+                        setIsLoaded(true);
+                    }
+                    return null;
+                }
                 return res.json() as Promise<{ products: Product[] }>;
             })
             .then(data => {
@@ -81,8 +101,11 @@ export default function Deals({
                 setIsLoaded(true);
             });
 
-        return () => controller.abort();
-    }, [storeId, baseUrl]);
+        return () => {
+            controller.abort();
+            if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+        };
+    }, [storeId, baseUrl, fetchKey]);
 
     // Reset carousel position when sort changes
     useEffect(() => {
@@ -174,7 +197,7 @@ export default function Deals({
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                     </svg>
                     {storeId
-                        ? `Fetching live inventory for ${storeName}…`
+                        ? `Fetching live inventory for ${storeName} — first load may take a minute…`
                         : 'Loading deals…'}
                 </div>
                 <div className="flex gap-5 overflow-hidden">

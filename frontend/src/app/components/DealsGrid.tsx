@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { TbTag, TbWorld, TbBuildingStore, TbX, TbRefresh } from 'react-icons/tb';
 import ShareButton from './ShareButton';
 import FavoriteButton from './FavoriteButton';
@@ -37,10 +37,21 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
     const [isLoaded, setIsLoaded] = useState(false);
     const [offline, setOffline] = useState(false);
     const [sort, setSort] = useState<'savings' | 'price-asc' | 'price-desc'>('savings');
+    const [fetchKey, setFetchKey] = useState(0);
+    const retryCountRef = useRef(0);
+    const lastStoreKeyRef = useRef('');
+    const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [minPrice, setMinPrice] = useState('');
     const [maxPrice, setMaxPrice] = useState('');
 
     useEffect(() => {
+        const storeKey = `${storeId}|${baseUrl}`;
+        if (storeKey !== lastStoreKeyRef.current) {
+            retryCountRef.current = 0;
+            lastStoreKeyRef.current = storeKey;
+        }
+        if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+
         setIsLoaded(false);
         setProducts([]);
         setOffline(false);
@@ -51,7 +62,16 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
 
         fetch(url, { signal: controller.signal })
             .then(res => {
-                if (!res.ok) { setOffline(true); setIsLoaded(true); return null; }
+                if (!res.ok) {
+                    if (retryCountRef.current < 3) {
+                        retryCountRef.current++;
+                        retryTimerRef.current = setTimeout(() => setFetchKey(k => k + 1), 20000);
+                    } else {
+                        setOffline(true);
+                        setIsLoaded(true);
+                    }
+                    return null;
+                }
                 return res.json() as Promise<{ products: Product[] }>;
             })
             .then(data => {
@@ -65,8 +85,11 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
                 setIsLoaded(true);
             });
 
-        return () => controller.abort();
-    }, [storeId, baseUrl]);
+        return () => {
+            controller.abort();
+            if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+        };
+    }, [storeId, baseUrl, fetchKey]);
 
     const sortedProducts = useMemo(() => {
         const min = minPrice !== '' ? parseFloat(minPrice) : null;
@@ -120,7 +143,7 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                     </svg>
-                    {storeId ? `Fetching live inventory for ${storeName}…` : 'Loading deals…'}
+                    {storeId ? `Fetching live inventory for ${storeName} — first load may take a minute…` : 'Loading deals…'}
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                     {Array.from({ length: 12 }).map((_, i) => (

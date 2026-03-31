@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
         : `${FLASK}/deals/gpu`;
 
     try {
-        const res = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(20000) });
+        const res = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(60000) });
         const data = await res.json();
         return NextResponse.json(data);
     } catch {
