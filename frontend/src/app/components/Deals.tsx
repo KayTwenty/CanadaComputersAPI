@@ -14,7 +14,7 @@ interface Product {
     image_url: string;
 }
 
-const CARD_WIDTH = 400;
+const DESKTOP_CARD_WIDTH = 400;
 const GAP = 20;
 
 function isAvailable(str: string): boolean {
@@ -37,7 +37,18 @@ export default function Deals({
     const [error, setError] = useState<Error | null>(null);
     const [activeIndex, setActiveIndex] = useState(0);
     const [sort, setSort] = useState<'savings' | 'price-asc' | 'price-desc'>('savings');
+    const [cardWidth, setCardWidth] = useState(DESKTOP_CARD_WIDTH);
     const scrollRef = useRef<HTMLDivElement>(null);
+
+    // Responsive card width: full-ish on mobile, fixed on desktop
+    useEffect(() => {
+        const update = () => {
+            setCardWidth(window.innerWidth < 640 ? Math.min(window.innerWidth - 48, DESKTOP_CARD_WIDTH) : DESKTOP_CARD_WIDTH);
+        };
+        update();
+        window.addEventListener('resize', update);
+        return () => window.removeEventListener('resize', update);
+    }, []);
 
     useEffect(() => {
         setIsLoaded(false);
@@ -88,12 +99,12 @@ export default function Deals({
 
     const handleScroll = useCallback(() => {
         if (!scrollRef.current) return;
-        const idx = Math.round(scrollRef.current.scrollLeft / (CARD_WIDTH + GAP));
+        const idx = Math.round(scrollRef.current.scrollLeft / (cardWidth + GAP));
         setActiveIndex(Math.max(0, Math.min(idx, products.length - 1)));
-    }, [products.length]);
+    }, [products.length, cardWidth]);
 
     const scrollToIndex = (index: number) => {
-        scrollRef.current?.scrollTo({ left: index * (CARD_WIDTH + GAP), behavior: 'smooth' });
+        scrollRef.current?.scrollTo({ left: index * (cardWidth + GAP), behavior: 'smooth' });
     };
 
     const prev = () => {
@@ -117,11 +128,11 @@ export default function Deals({
             if (el.scrollLeft >= maxScroll - 4) {
                 el.scrollTo({ left: 0, behavior: 'smooth' });
             } else {
-                el.scrollBy({ left: CARD_WIDTH + GAP, behavior: 'smooth' });
+                el.scrollBy({ left: cardWidth + GAP, behavior: 'smooth' });
             }
         }, 3000);
         return () => { if (autoScrollRef.current) clearInterval(autoScrollRef.current); };
-    }, [sortedProducts.length]);
+    }, [sortedProducts.length, cardWidth]);
 
     if (error) return <p className="text-red-500 p-4">Error loading deals: {error.message}</p>;
 
@@ -139,7 +150,7 @@ export default function Deals({
                 </div>
                 <div className="flex gap-5 overflow-hidden">
                     {Array.from({ length: 4 }).map((_, i) => (
-                        <div key={i} className="flex-none bg-white rounded-3xl shadow-sm border border-slate-100 p-6 animate-pulse" style={{ width: CARD_WIDTH }}>
+                        <div key={i} className="flex-none bg-white rounded-3xl shadow-sm border border-slate-100 p-6 animate-pulse" style={{ width: cardWidth }}>
                             <div className="bg-slate-100 rounded-2xl h-56 mb-6" />
                             <div className="h-4 bg-slate-100 rounded w-3/4 mb-3" />
                             <div className="h-4 bg-slate-100 rounded w-1/2 mb-6" />
@@ -152,7 +163,7 @@ export default function Deals({
     }
 
     if (products.length === 0) {
-        return <p className="text-slate-500 p-4">Deals are being fetched in the background — refresh in a moment.</p>;
+        return <p className="text-slate-500 p-4">Deals are being fetched in the background. Refresh in a moment.</p>;
     }
 
     const SORT_OPTIONS: { key: typeof sort; label: string }[] = [
@@ -183,11 +194,11 @@ export default function Deals({
 
             {/* Carousel + arrows */}
             <div className="relative">
-                {/* Left arrow */}
+                {/* Left arrow — hidden on mobile (swipe instead) */}
                 <button
                     onClick={prev}
                     disabled={activeIndex === 0}
-                    className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 bg-white border border-slate-200 shadow-md rounded-full p-2 text-slate-600 hover:text-slate-900 hover:border-slate-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="hidden sm:block absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 bg-white border border-slate-200 shadow-md rounded-full p-2 text-slate-600 hover:text-slate-900 hover:border-slate-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                     aria-label="Previous"
                 >
                     <TbChevronLeft size={20} />
@@ -217,17 +228,10 @@ export default function Deals({
                                 target="_blank"
                                 rel="noreferrer"
                                 className="snap-start flex-none bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-lg hover:border-slate-200 transition-all duration-300 flex flex-col overflow-hidden group"
-                                style={{ width: CARD_WIDTH }}
+                                style={{ width: cardWidth }}
                             >
                                 {/* Image */}
                                 <div className="relative bg-slate-50 flex items-center justify-center h-60 p-6">
-                                    {/* Savings badge — primary sort signal */}
-                                    <span className="absolute top-4 left-4 bg-emerald-500 text-white text-sm font-extrabold px-3 py-1.5 rounded-xl shadow-sm">
-                                        Save ${savings}
-                                    </span>
-                                    <span className="absolute top-4 right-4 bg-slate-800/70 text-white text-xs font-semibold px-2 py-1 rounded-lg">
-                                        -{pct}%
-                                    </span>
                                     {product.image_url ? (
                                         // eslint-disable-next-line @next/next/no-img-element
                                         <img
@@ -291,11 +295,11 @@ export default function Deals({
                     })}
                 </div>
 
-                {/* Right arrow */}
+                {/* Right arrow — hidden on mobile (swipe instead) */}
                 <button
                     onClick={next}
                     disabled={activeIndex === products.length - 1}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 bg-white border border-slate-200 shadow-md rounded-full p-2 text-slate-600 hover:text-slate-900 hover:border-slate-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="hidden sm:block absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 bg-white border border-slate-200 shadow-md rounded-full p-2 text-slate-600 hover:text-slate-900 hover:border-slate-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
                     aria-label="Next"
                 >
                     <TbChevronRight size={20} />

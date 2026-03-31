@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import {
     TbDeviceDesktop, TbExternalLink, TbMapPin,
-    TbCurrentLocation, TbChevronDown, TbX, TbCheck, TbRefresh, TbCpu, TbCpu2,
+    TbCurrentLocation, TbChevronDown, TbX, TbCheck, TbRefresh, TbCpu, TbCpu2, TbPhoto, TbMenu2,
 } from 'react-icons/tb';
 import { useStore } from '../contexts/StoreContext';
 import { STORES, distanceBetween, type StoreEntry } from '../lib/stores';
@@ -43,6 +43,7 @@ function StoreRow({ store, selected, onSelect }: {
 export default function Navbar() {
     const { storeId, selectedStore, locationState, userPos, bannerDismissed, selectStore, requestLocation, dismissBanner } = useStore();
     const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const pathname = usePathname();
 
@@ -54,6 +55,9 @@ export default function Navbar() {
         document.addEventListener('mousedown', handler);
         return () => document.removeEventListener('mousedown', handler);
     }, []);
+
+    // Close mobile menu on route change
+    useEffect(() => { setMobileMenuOpen(false); }, [pathname]);
 
     const handleSelectStore = (id: number | null) => {
         selectStore(id);
@@ -89,13 +93,15 @@ export default function Navbar() {
         ? 'https://www.canadacomputers.com/en/1009/memory'
         : pathname === '/cpu'
         ? 'https://www.canadacomputers.com/en/956/cpu'
+        : pathname === '/gpu'
+        ? 'https://www.canadacomputers.com/en/914/graphics-cards'
         : 'https://www.canadacomputers.com/en/931/desktop-computers';
 
     return (
         <>
             <header className="bg-zinc-900 sticky top-0 z-40">
                 <div className="max-w-7xl mx-auto px-6 py-3.5 flex items-center justify-between">
-                    {/* Logo + nav links */}
+                    {/* Logo + desktop nav links */}
                     <div className="flex items-center gap-6">
                         <a href="/" className="flex items-center gap-3 group">
                             <div className="bg-white text-zinc-900 p-1.5 rounded-md group-hover:scale-105 transition-transform duration-200">
@@ -118,10 +124,14 @@ export default function Navbar() {
                                 <TbCpu2 size={14} />
                                 Processors
                             </a>
+                            <a href="/gpu" className={navCls('/gpu')}>
+                                <TbPhoto size={14} />
+                                Graphics
+                            </a>
                         </div>
                     </div>
 
-                    {/* Store picker + browse source */}
+                    {/* Right side: store picker + browse + hamburger */}
                     <nav className="flex items-center gap-2">
                         <div ref={dropdownRef} className="relative">
                             <button
@@ -207,8 +217,53 @@ export default function Navbar() {
                             Browse source
                             <TbExternalLink size={12} />
                         </a>
+
+                        {/* Hamburger — mobile only */}
+                        <button
+                            onClick={() => setMobileMenuOpen(v => !v)}
+                            className="sm:hidden p-1.5 text-zinc-400 hover:text-white transition-colors"
+                            aria-label="Toggle menu"
+                        >
+                            {mobileMenuOpen ? <TbX size={22} /> : <TbMenu2 size={22} />}
+                        </button>
                     </nav>
                 </div>
+
+                {/* Mobile nav drawer */}
+                {mobileMenuOpen && (
+                    <div className="sm:hidden bg-zinc-900 border-t border-zinc-800 px-6 py-4 flex flex-col gap-1">
+                        {[
+                            { href: '/desktops', label: 'Desktops', Icon: TbDeviceDesktop },
+                            { href: '/memory',   label: 'Memory',    Icon: TbCpu },
+                            { href: '/cpu',      label: 'Processors', Icon: TbCpu2 },
+                            { href: '/gpu',      label: 'Graphics',   Icon: TbPhoto },
+                        ].map(({ href, label, Icon }) => (
+                            <a
+                                key={href}
+                                href={href}
+                                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                                    pathname === href
+                                        ? 'bg-zinc-800 text-white'
+                                        : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
+                                }`}
+                            >
+                                <Icon size={16} />
+                                {label}
+                            </a>
+                        ))}
+                        <div className="mt-2 pt-3 border-t border-zinc-800">
+                            <a
+                                href={browseSrc}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="flex items-center gap-2 text-xs font-medium text-zinc-400 hover:text-white transition-colors px-3 py-2"
+                            >
+                                Browse on Canada Computers
+                                <TbExternalLink size={12} />
+                            </a>
+                        </div>
+                    </div>
+                )}
             </header>
 
             {/* Location banner — shown only before user has responded */}
