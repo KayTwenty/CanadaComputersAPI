@@ -35,7 +35,7 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
     const lastUpdated = useLastUpdated(cacheKey);
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoaded, setIsLoaded] = useState(false);
-    const [error, setError] = useState<Error | null>(null);
+    const [offline, setOffline] = useState(false);
     const [sort, setSort] = useState<'savings' | 'price-asc' | 'price-desc'>('savings');
     const [minPrice, setMinPrice] = useState('');
     const [maxPrice, setMaxPrice] = useState('');
@@ -43,20 +43,29 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
     useEffect(() => {
         setIsLoaded(false);
         setProducts([]);
-        setError(null);
+        setOffline(false);
 
         const url = storeId ? `${baseUrl}?pickup=${storeId}` : baseUrl;
 
-        fetch(url)
-            .then(res => res.json())
-            .then((data: { products: Product[] }) => {
-                setProducts(data.products);
+        const controller = new AbortController();
+
+        fetch(url, { signal: controller.signal })
+            .then(res => {
+                if (!res.ok) { setOffline(true); setIsLoaded(true); return null; }
+                return res.json() as Promise<{ products: Product[] }>;
+            })
+            .then(data => {
+                if (!data) return;
+                setProducts(data.products ?? []);
                 setIsLoaded(true);
             })
             .catch(err => {
-                setError(err);
+                if ((err as Error).name === 'AbortError') return;
+                setOffline(true);
                 setIsLoaded(true);
             });
+
+        return () => controller.abort();
     }, [storeId, baseUrl]);
 
     const sortedProducts = useMemo(() => {
@@ -83,7 +92,25 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
         { key: 'price-desc', label: 'Price: High → Low' },
     ];
 
-    if (error) return <p className="text-red-500 p-4">Error loading deals: {error.message}</p>;
+    if (offline) {
+        return (
+            <div className="flex flex-col gap-6">
+                <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+                    <span>⚠ Backend temporarily unavailable — deals will appear once the service is back.</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                    {Array.from({ length: 12 }).map((_, i) => (
+                        <div key={i} className="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 animate-pulse">
+                            <div className="bg-slate-100 rounded-2xl h-48 mb-5" />
+                            <div className="h-4 bg-slate-100 rounded w-3/4 mb-3" />
+                            <div className="h-4 bg-slate-100 rounded w-1/2 mb-5" />
+                            <div className="h-10 bg-slate-100 rounded-2xl w-full" />
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
 
     if (!isLoaded) {
         return (
@@ -110,7 +137,7 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
     }
 
     if (sortedProducts.length === 0 && products.length === 0) {
-        return <p className="text-slate-500 p-4">No deals found — try a different store or check back shortly.</p>;
+        return <p className="text-slate-500 p-4">No deals found. Try a different store or check back shortly.</p>;
     }
 
     return (

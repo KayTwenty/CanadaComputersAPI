@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
         : `${FLASK}/deals/desktops`;
 
     try {
-        const res = await fetch(url, { cache: 'no-store' });
+        const res = await fetch(url, { cache: 'no-store', signal: AbortSignal.timeout(20000) });
         const data = await res.json();
         return NextResponse.json(data);
     } catch {

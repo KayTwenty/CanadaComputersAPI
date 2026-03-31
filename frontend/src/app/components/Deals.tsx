@@ -36,7 +36,7 @@ export default function Deals({
 }) {
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoaded, setIsLoaded] = useState(false);
-    const [error, setError] = useState<Error | null>(null);
+    const [offline, setOffline] = useState(false);
     const [activeIndex, setActiveIndex] = useState(0);
     const [sort, setSort] = useState<'savings' | 'price-asc' | 'price-desc'>('savings');
     const [cardWidth, setCardWidth] = useState(DESKTOP_CARD_WIDTH);
@@ -55,7 +55,7 @@ export default function Deals({
     useEffect(() => {
         setIsLoaded(false);
         setProducts([]);
-        setError(null);
+        setOffline(false);
         setActiveIndex(0);
         if (scrollRef.current) scrollRef.current.scrollLeft = 0;
 
@@ -63,16 +63,25 @@ export default function Deals({
             ? `${baseUrl}?pickup=${storeId}`
             : baseUrl;
 
-        fetch(url)
-            .then(res => res.json())
-            .then((data: { products: Product[] }) => {
-                setProducts(data.products);
+        const controller = new AbortController();
+
+        fetch(url, { signal: controller.signal })
+            .then(res => {
+                if (!res.ok) { setOffline(true); setIsLoaded(true); return null; }
+                return res.json() as Promise<{ products: Product[] }>;
+            })
+            .then(data => {
+                if (!data) return;
+                setProducts(data.products ?? []);
                 setIsLoaded(true);
             })
             .catch(err => {
-                setError(err);
+                if ((err as Error).name === 'AbortError') return;
+                setOffline(true);
                 setIsLoaded(true);
             });
+
+        return () => controller.abort();
     }, [storeId, baseUrl]);
 
     // Reset carousel position when sort changes
@@ -136,7 +145,25 @@ export default function Deals({
         return () => { if (autoScrollRef.current) clearInterval(autoScrollRef.current); };
     }, [sortedProducts.length, cardWidth]);
 
-    if (error) return <p className="text-red-500 p-4">Error loading deals: {error.message}</p>;
+    if (offline) {
+        return (
+            <div className="flex flex-col gap-4">
+                <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+                    <span>⚠ Backend temporarily unavailable — deals will appear once the service is back.</span>
+                </div>
+                <div className="flex gap-5 overflow-hidden">
+                    {Array.from({ length: 4 }).map((_, i) => (
+                        <div key={i} className="flex-none bg-white rounded-3xl shadow-sm border border-slate-100 p-6 animate-pulse" style={{ width: cardWidth }}>
+                            <div className="bg-slate-100 rounded-2xl h-56 mb-6" />
+                            <div className="h-4 bg-slate-100 rounded w-3/4 mb-3" />
+                            <div className="h-4 bg-slate-100 rounded w-1/2 mb-6" />
+                            <div className="h-12 bg-slate-100 rounded-2xl w-full" />
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
 
     if (!isLoaded) {
         return (
