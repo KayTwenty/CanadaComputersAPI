@@ -32,7 +32,7 @@ export default function MemoryPage() {
                 <DealsGrid
                     storeId={storeId}
                     storeName={selectedStore.name}
-                    baseUrl="http://127.0.0.1:5000/deals/memory"
+                    baseUrl="/api/deals/memory"
                     cacheKey="__memory__"
                 />
             </div>

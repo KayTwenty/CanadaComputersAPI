@@ -36,7 +36,7 @@ export default function CpuPage() {
                 <DealsGrid
                     storeId={storeId}
                     storeName={selectedStore.name}
-                    baseUrl="http://127.0.0.1:5000/deals/cpu"
+                    baseUrl="/api/deals/cpu"
                     cacheKey="__cpu__"
                 />
             </div>

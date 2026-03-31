@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 
-const STATUS_URL = 'http://127.0.0.1:5000/status';
+const STATUS_URL = '/api/status';
 
 interface CacheEntry {
     store_key: string;

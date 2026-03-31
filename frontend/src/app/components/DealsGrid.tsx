@@ -29,7 +29,7 @@ const savingsAmt = (p: Product) => {
     return reg - price(p);
 };
 
-const DEFAULT_BASE_URL = 'http://127.0.0.1:5000/deals/desktops';
+const DEFAULT_BASE_URL = '/api/deals/desktops';
 
 export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_URL, cacheKey = '__all__' }: { storeId: number | null; storeName: string; baseUrl?: string; cacheKey?: string }) {
     const lastUpdated = useLastUpdated(cacheKey);

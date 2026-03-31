@@ -28,7 +28,7 @@ function isAvailable(str: string): boolean {
 export default function Deals({
     storeId = null,
     storeName = 'All Stores',
-    baseUrl = 'http://127.0.0.1:5000/deals/desktops',
+    baseUrl = '/api/deals/desktops',
 }: {
     storeId?: number | null;
     storeName?: string;

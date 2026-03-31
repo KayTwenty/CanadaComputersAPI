@@ -77,7 +77,7 @@ export default function HomeContent() {
                 <Deals
                     storeId={storeId}
                     storeName={storeName}
-                    baseUrl="http://127.0.0.1:5000/deals/memory"
+                    baseUrl="/api/deals/memory"
                 />
             </div>
 
@@ -112,7 +112,7 @@ export default function HomeContent() {
                 <Deals
                     storeId={storeId}
                     storeName={storeName}
-                    baseUrl="http://127.0.0.1:5000/deals/cpu"
+                    baseUrl="/api/deals/cpu"
                 />
             </div>
 
@@ -147,7 +147,7 @@ export default function HomeContent() {
                 <Deals
                     storeId={storeId}
                     storeName={storeName}
-                    baseUrl="http://127.0.0.1:5000/deals/gpu"
+                    baseUrl="/api/deals/gpu"
                 />
             </div>
         </>
