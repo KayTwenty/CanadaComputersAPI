@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { StoreProvider } from "./contexts/StoreContext";
+import { FavoritesProvider } from "./contexts/FavoritesContext";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import TopBanner from "./components/TopBanner";
@@ -87,10 +88,12 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col bg-slate-50">
         <StoreProvider>
-          <TopBanner />
-          <Navbar />
-          {children}
-          <Footer />
+          <FavoritesProvider>
+            <TopBanner />
+            <Navbar />
+            {children}
+            <Footer />
+          </FavoritesProvider>
         </StoreProvider>
       </body>
     </html>

@@ -1,12 +1,18 @@
 'use client';
 
-import { TbArrowRight, TbCpu, TbDeviceDesktopAnalytics, TbCpu2, TbPhoto } from 'react-icons/tb';
+import { TbArrowRight, TbCpu, TbDeviceDesktopAnalytics, TbCpu2, TbPhoto, TbRefresh } from 'react-icons/tb';
 import Deals from './Deals';
 import { useStore } from '../contexts/StoreContext';
+import { useLastUpdated } from '../hooks/useLastUpdated';
 
 export default function HomeContent() {
     const { storeId, selectedStore } = useStore();
     const storeName = selectedStore.name;
+
+    const desktopsAge = useLastUpdated('__all__');
+    const memoryAge   = useLastUpdated('__memory__');
+    const cpuAge      = useLastUpdated('__cpu__');
+    const gpuAge      = useLastUpdated('__gpu__');
     return (
         <>
             {/* Desktops section */}
@@ -23,6 +29,11 @@ export default function HomeContent() {
                         <p className="mt-1.5 text-slate-500 text-sm max-w-md">
                             Prebuilt desktops on sale, sorted by biggest dollar savings first.
                         </p>
+                        {desktopsAge && (
+                            <p className="mt-1 text-xs text-slate-400 flex items-center gap-1">
+                                <TbRefresh size={11} />{desktopsAge}
+                            </p>
+                        )}
                     </div>
                     <a
                         href="/desktops"
@@ -49,6 +60,11 @@ export default function HomeContent() {
                         <p className="mt-1.5 text-slate-500 text-sm max-w-md">
                             On-sale memory kits, sorted by biggest dollar savings first.
                         </p>
+                        {memoryAge && (
+                            <p className="mt-1 text-xs text-slate-400 flex items-center gap-1">
+                                <TbRefresh size={11} />{memoryAge}
+                            </p>
+                        )}
                     </div>
                     <a
                         href="/memory"
@@ -79,6 +95,11 @@ export default function HomeContent() {
                         <p className="mt-1.5 text-slate-500 text-sm max-w-md">
                             On-sale processors, sorted by biggest dollar savings first.
                         </p>
+                        {cpuAge && (
+                            <p className="mt-1 text-xs text-slate-400 flex items-center gap-1">
+                                <TbRefresh size={11} />{cpuAge}
+                            </p>
+                        )}
                     </div>
                     <a
                         href="/cpu"
@@ -109,6 +130,11 @@ export default function HomeContent() {
                         <p className="mt-1.5 text-slate-500 text-sm max-w-md">
                             On-sale graphics cards, sorted by biggest dollar savings first.
                         </p>
+                        {gpuAge && (
+                            <p className="mt-1 text-xs text-slate-400 flex items-center gap-1">
+                                <TbRefresh size={11} />{gpuAge}
+                            </p>
+                        )}
                     </div>
                     <a
                         href="/gpu"

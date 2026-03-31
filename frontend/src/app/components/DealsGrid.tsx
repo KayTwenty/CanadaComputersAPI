@@ -1,7 +1,10 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { TbTag, TbWorld, TbBuildingStore } from 'react-icons/tb';
+import { TbTag, TbWorld, TbBuildingStore, TbX, TbRefresh } from 'react-icons/tb';
+import ShareButton from './ShareButton';
+import FavoriteButton from './FavoriteButton';
+import { useLastUpdated } from '../hooks/useLastUpdated';
 
 interface Product {
     title: string;
@@ -28,11 +31,14 @@ const savingsAmt = (p: Product) => {
 
 const DEFAULT_BASE_URL = 'http://127.0.0.1:5000/deals/desktops';
 
-export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_URL }: { storeId: number | null; storeName: string; baseUrl?: string }) {
+export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_URL, cacheKey = '__all__' }: { storeId: number | null; storeName: string; baseUrl?: string; cacheKey?: string }) {
+    const lastUpdated = useLastUpdated(cacheKey);
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoaded, setIsLoaded] = useState(false);
     const [error, setError] = useState<Error | null>(null);
     const [sort, setSort] = useState<'savings' | 'price-asc' | 'price-desc'>('savings');
+    const [minPrice, setMinPrice] = useState('');
+    const [maxPrice, setMaxPrice] = useState('');
 
     useEffect(() => {
         setIsLoaded(false);
@@ -54,12 +60,22 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
     }, [storeId, baseUrl]);
 
     const sortedProducts = useMemo(() => {
-        const copy = [...products];
+        const min = minPrice !== '' ? parseFloat(minPrice) : null;
+        const max = maxPrice !== '' ? parseFloat(maxPrice) : null;
+        const copy = products.filter(p => {
+            const p$ = price(p);
+            if (min !== null && p$ < min) return false;
+            if (max !== null && p$ > max) return false;
+            return true;
+        });
         if (sort === 'price-asc') copy.sort((a, b) => price(a) - price(b));
         else if (sort === 'price-desc') copy.sort((a, b) => price(b) - price(a));
         else copy.sort((a, b) => savingsAmt(b) - savingsAmt(a));
         return copy;
-    }, [products, sort]);
+    }, [products, sort, minPrice, maxPrice]);
+
+    const priceFiltered = minPrice !== '' || maxPrice !== '';
+    const clearPriceFilter = () => { setMinPrice(''); setMaxPrice(''); };
 
     const SORT_OPTIONS: { key: typeof sort; label: string }[] = [
         { key: 'savings', label: 'Best Savings' },
@@ -93,39 +109,96 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
         );
     }
 
-    if (sortedProducts.length === 0) {
+    if (sortedProducts.length === 0 && products.length === 0) {
         return <p className="text-slate-500 p-4">No deals found — try a different store or check back shortly.</p>;
     }
 
     return (
         <div className="flex flex-col gap-6">
             {/* Toolbar */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <p className="text-sm text-slate-500">
-                    <span className="font-semibold text-slate-800">{sortedProducts.length}</span> deals found
-                    {storeName !== 'All Stores' && (
-                        <> at <span className="font-semibold text-slate-800">{storeName}</span></>
-                    )}
-                </p>
+            <div className="flex flex-col gap-3">
+                {/* Row 1: count + sort */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex flex-col gap-0.5">
+                        <p className="text-sm text-slate-500">
+                            <span className="font-semibold text-slate-800">{sortedProducts.length}</span>
+                            {priceFiltered && <span className="text-slate-400"> of {products.length}</span>}
+                            {' '}deals found
+                            {storeName !== 'All Stores' && (
+                                <> at <span className="font-semibold text-slate-800">{storeName}</span></>
+                            )}
+                        </p>
+                        {lastUpdated && (
+                            <p className="text-xs text-slate-400 flex items-center gap-1">
+                                <TbRefresh size={11} />{lastUpdated}
+                            </p>
+                        )}
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-medium text-slate-400 mr-1">Sort by</span>
+                        {SORT_OPTIONS.map(opt => (
+                            <button
+                                key={opt.key}
+                                onClick={() => setSort(opt.key)}
+                                className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-all ${
+                                    sort === opt.key
+                                        ? 'bg-slate-800 text-white border-slate-800'
+                                        : 'bg-white text-slate-500 border-slate-200 hover:border-slate-400 hover:text-slate-700'
+                                }`}
+                            >
+                                {opt.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Row 2: price range */}
                 <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-medium text-slate-400 mr-1">Sort by</span>
-                    {SORT_OPTIONS.map(opt => (
+                    <span className="text-xs font-medium text-slate-400">Price</span>
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-slate-400">$</span>
+                        <input
+                            type="number"
+                            min="0"
+                            placeholder="Min"
+                            value={minPrice}
+                            onChange={e => setMinPrice(e.target.value)}
+                            className="w-24 text-xs font-medium px-3 py-1.5 rounded-full border border-slate-200 bg-white text-slate-700 placeholder-slate-300 focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-200 transition-all"
+                        />
+                    </div>
+                    <span className="text-xs text-slate-400">to</span>
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-slate-400">$</span>
+                        <input
+                            type="number"
+                            min="0"
+                            placeholder="Max"
+                            value={maxPrice}
+                            onChange={e => setMaxPrice(e.target.value)}
+                            className="w-24 text-xs font-medium px-3 py-1.5 rounded-full border border-slate-200 bg-white text-slate-700 placeholder-slate-300 focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-200 transition-all"
+                        />
+                    </div>
+                    {priceFiltered && (
                         <button
-                            key={opt.key}
-                            onClick={() => setSort(opt.key)}
-                            className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-all ${
-                                sort === opt.key
-                                    ? 'bg-slate-800 text-white border-slate-800'
-                                    : 'bg-white text-slate-500 border-slate-200 hover:border-slate-400 hover:text-slate-700'
-                            }`}
+                            onClick={clearPriceFilter}
+                            className="inline-flex items-center gap-1 text-xs font-semibold text-slate-400 hover:text-slate-700 transition-colors"
                         >
-                            {opt.label}
+                            <TbX size={12} />
+                            Clear
                         </button>
-                    ))}
+                    )}
                 </div>
             </div>
 
             {/* Grid */}
+            {sortedProducts.length === 0 ? (
+                <div className="text-center py-16">
+                    <p className="text-slate-500 text-sm">No deals match that price range.</p>
+                    <button onClick={clearPriceFilter} className="mt-3 text-xs font-semibold text-violet-600 hover:text-violet-800 transition-colors">
+                        Clear filter
+                    </button>
+                </div>
+            ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                 {sortedProducts.map(product => {
                     const sale = parseFloat(product.price.replace(/[$,]/g, ''));
@@ -145,6 +218,9 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
                         >
                             {/* Image */}
                             <div className="relative bg-slate-50 flex items-center justify-center h-52 p-5">
+                                <div className="absolute top-3 left-3">
+                                    <FavoriteButton product={product} variant="icon" />
+                                </div>
                                 {product.image_url ? (
                                     // eslint-disable-next-line @next/next/no-img-element
                                     <img
@@ -198,12 +274,14 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
                                         <TbBuildingStore size={12} />
                                         {instoreAvail ? 'In-Store' : 'Not In-Store'}
                                     </span>
+                                    <ShareButton title={product.title} url={product.link} price={product.price} size="sm" />
                                 </div>
                             </div>
                         </a>
                     );
                 })}
             </div>
+            )}
         </div>
     );
 }

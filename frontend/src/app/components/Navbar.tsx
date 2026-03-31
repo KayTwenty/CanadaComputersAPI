@@ -3,10 +3,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import {
-    TbDeviceDesktop, TbExternalLink, TbMapPin,
-    TbCurrentLocation, TbChevronDown, TbX, TbCheck, TbRefresh, TbCpu, TbCpu2, TbPhoto, TbMenu2,
+    TbDeviceDesktop, TbMapPin,
+    TbCurrentLocation, TbChevronDown, TbX, TbCheck, TbRefresh, TbCpu, TbCpu2, TbPhoto, TbMenu2, TbHeart, TbQuestionMark,
 } from 'react-icons/tb';
 import { useStore } from '../contexts/StoreContext';
+import { useFavorites } from '../contexts/FavoritesContext';
 import { STORES, distanceBetween, type StoreEntry } from '../lib/stores';
 
 interface StoreWithDist extends StoreEntry { dist: number | null }
@@ -42,6 +43,7 @@ function StoreRow({ store, selected, onSelect }: {
 
 export default function Navbar() {
     const { storeId, selectedStore, locationState, userPos, bannerDismissed, selectStore, requestLocation, dismissBanner } = useStore();
+    const { favorites } = useFavorites();
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -89,14 +91,6 @@ export default function Navbar() {
                 : 'font-medium text-zinc-400 hover:text-white'
         }`;
 
-    const browseSrc = pathname === '/memory'
-        ? 'https://www.canadacomputers.com/en/1009/memory'
-        : pathname === '/cpu'
-        ? 'https://www.canadacomputers.com/en/956/cpu'
-        : pathname === '/gpu'
-        ? 'https://www.canadacomputers.com/en/914/graphics-cards'
-        : 'https://www.canadacomputers.com/en/931/desktop-computers';
-
     return (
         <>
             <header className="bg-zinc-900 sticky top-0 z-40">
@@ -127,6 +121,20 @@ export default function Navbar() {
                             <a href="/gpu" className={navCls('/gpu')}>
                                 <TbPhoto size={14} />
                                 Graphics
+                            </a>
+                            <div className="w-px h-4 bg-zinc-700" />
+                            <a href="/favorites" className={`${navCls('/favorites')} relative`}>
+                                <TbHeart size={14} />
+                                Favorites
+                                {favorites.length > 0 && (
+                                    <span className="absolute -top-1.5 -right-2.5 min-w-4 h-4 px-1 bg-rose-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
+                                        {favorites.length > 99 ? '99+' : favorites.length}
+                                    </span>
+                                )}
+                            </a>
+                            <a href="/faq" className={navCls('/faq')}>
+                                <TbQuestionMark size={14} />
+                                FAQ
                             </a>
                         </div>
                     </div>
@@ -208,16 +216,6 @@ export default function Navbar() {
                             )}
                         </div>
 
-                        <a
-                            href={browseSrc}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium text-zinc-300 hover:text-white bg-zinc-800/80 hover:bg-zinc-700 border border-zinc-700/50 hover:border-zinc-600 rounded-full px-4 py-1.5 transition-all duration-200"
-                        >
-                            Browse source
-                            <TbExternalLink size={12} />
-                        </a>
-
                         {/* Hamburger — mobile only */}
                         <button
                             onClick={() => setMobileMenuOpen(v => !v)}
@@ -233,10 +231,12 @@ export default function Navbar() {
                 {mobileMenuOpen && (
                     <div className="sm:hidden bg-zinc-900 border-t border-zinc-800 px-6 py-4 flex flex-col gap-1">
                         {[
-                            { href: '/desktops', label: 'Desktops', Icon: TbDeviceDesktop },
-                            { href: '/memory',   label: 'Memory',    Icon: TbCpu },
+                            { href: '/desktops', label: 'Desktops',   Icon: TbDeviceDesktop },
+                            { href: '/memory',   label: 'Memory',     Icon: TbCpu },
                             { href: '/cpu',      label: 'Processors', Icon: TbCpu2 },
                             { href: '/gpu',      label: 'Graphics',   Icon: TbPhoto },
+                            { href: '/favorites', label: 'Favorites', Icon: TbHeart },
+                            { href: '/faq',       label: 'FAQ',       Icon: TbQuestionMark },
                         ].map(({ href, label, Icon }) => (
                             <a
                                 key={href}
@@ -251,17 +251,7 @@ export default function Navbar() {
                                 {label}
                             </a>
                         ))}
-                        <div className="mt-2 pt-3 border-t border-zinc-800">
-                            <a
-                                href={browseSrc}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="flex items-center gap-2 text-xs font-medium text-zinc-400 hover:text-white transition-colors px-3 py-2"
-                            >
-                                Browse on Canada Computers
-                                <TbExternalLink size={12} />
-                            </a>
-                        </div>
+                        <div className="mt-2 pt-3 border-t border-zinc-800" />
                     </div>
                 )}
             </header>

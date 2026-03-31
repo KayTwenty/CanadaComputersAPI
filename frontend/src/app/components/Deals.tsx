@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { TbTag, TbWorld, TbBuildingStore, TbChevronLeft, TbChevronRight } from 'react-icons/tb';
+import ShareButton from './ShareButton';
+import FavoriteButton from './FavoriteButton';
 
 interface Product {
     title: string;
@@ -232,6 +234,9 @@ export default function Deals({
                             >
                                 {/* Image */}
                                 <div className="relative bg-slate-50 flex items-center justify-center h-60 p-6">
+                                    <div className="absolute top-3 left-3">
+                                        <FavoriteButton product={product} variant="icon" />
+                                    </div>
                                     {product.image_url ? (
                                         // eslint-disable-next-line @next/next/no-img-element
                                         <img
@@ -288,6 +293,7 @@ export default function Deals({
                                             <TbBuildingStore size={13} />
                                             {instoreAvail ? 'In-Store' : 'Not In-Store'}
                                         </span>
+                                        <ShareButton title={product.title} url={product.link} price={product.price} />
                                     </div>
                                 </div>
                             </a>

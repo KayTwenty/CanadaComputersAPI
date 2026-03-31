@@ -49,7 +49,9 @@ export default function Footer() {
                         <p className="font-semibold text-zinc-400 uppercase tracking-widest mb-1">About</p>
                         <p>🍁 Proudly Canadian</p>
                         <p>Not affiliated with Canada Computers</p>
-                        <p>No personal data collected</p>
+                        <Link href="/faq" className="text-zinc-400 hover:text-white transition-colors duration-150">
+                            FAQ
+                        </Link>
                         <p>
                             Developed by{' '}
                             <a
@@ -67,7 +69,11 @@ export default function Footer() {
                 {/* Bottom bar */}
                 <div className="mt-8 pt-6 border-t border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-zinc-600">
                     <span>© {new Date().getFullYear()} CCDeals. All rights reserved.</span>
-                    <span>Prices and availability may vary. Verify on Canada Computers before purchasing.</span>
+                    <div className="flex items-center gap-4">
+                        <Link href="/terms" className="hover:text-zinc-400 transition-colors">Terms of Service</Link>
+                        <Link href="/privacy" className="hover:text-zinc-400 transition-colors">Privacy Policy</Link>
+                        <span>Prices may vary. Verify on Canada Computers before purchasing.</span>
+                    </div>
                 </div>
             </div>
         </footer>

@@ -29,7 +29,7 @@ export default function DesktopsPage() {
                 </p>
             </div>
             <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 pb-12 sm:pb-16 flex-1">
-                <DealsGrid storeId={storeId} storeName={selectedStore.name} />
+                <DealsGrid storeId={storeId} storeName={selectedStore.name} cacheKey="__all__" />
             </div>
         </>
     );
