@@ -1,28 +1,66 @@
-# CanadaComputersAPI
-hawkhacks2022 entry
+# CCDeals
 
-a RESTful API that scrapres data queried from Canada Computers' website
+A full-stack web app that tracks on-sale products at Canada Computers. The backend scrapes the Canada Computers website and caches results in SQLite. The frontend displays deals by category, sorted by biggest dollar savings, with optional filtering by store location.
 
-(frontend is kinda dead rn so focus on backend)
+Not affiliated with Canada Computers.
 
-# installation / setup
 
-clone repo
-make a venv and install requirements:
-`python -m venv env`
-`./env/Scripts/activate`
-`pip install -r requirements.txt`
+## Stack
 
-# running the project
-make sure ur in ur venv (you'll see `(env)` on the left of your prompt)
-run the api server locally
-`python backend/src/app.py`
+Backend: Python, Flask, BeautifulSoup, SQLite
 
-access it via `localhost:5000` (should be a "page not found")
-query Canada Computers with `localhost:5000/search/<SEARCH_STRING>`
+Frontend: Next.js 15, React, TypeScript, Tailwind CSS
 
-price range:
-`localhost:5000/search/<SEARCH_STRING>?price_min=<MIN>&price_max=<MAX>`
-returns listings that return from the search query that are within the price range given
 
-hawkhacks was fun
+## Setup
+
+Clone the repository.
+
+**Backend**
+
+Create and activate a virtual environment:
+
+    python -m venv env
+    ./env/Scripts/activate
+
+Install dependencies:
+
+    pip install -r backend/requirements.txt
+
+Run the API server:
+
+    python backend/src/app.py
+
+The server runs at http://127.0.0.1:5000 and begins caching deals in the background on startup.
+
+**Frontend**
+
+    cd frontend
+    npm install
+    npm run dev
+
+The frontend runs at http://localhost:3000.
+
+
+## API Endpoints
+
+    GET /deals/desktops
+    GET /deals/memory
+    GET /deals/cpu
+    GET /deals/gpu
+
+All endpoints accept an optional `pickup` query parameter with a store ID to filter by in-store availability at a specific location.
+
+    GET /search/<query>
+
+Searches Canada Computers for a product by name. Accepts optional `price_min` and `price_max` query parameters.
+
+    GET /status
+
+Returns cache status for all scraped categories and store locations.
+
+
+## Environment Variables
+
+Set `NEXT_PUBLIC_SITE_URL` to your production domain before deploying the frontend.
+

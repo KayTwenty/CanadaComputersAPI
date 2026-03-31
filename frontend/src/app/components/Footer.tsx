@@ -24,7 +24,7 @@ export default function Footer() {
                                 CC<span className="text-zinc-500">Deals</span>
                             </span>
                         </div>
-                        <p className="text-xs text-zinc-500 max-w-[220px] leading-relaxed">
+                        <p className="text-xs text-zinc-500 max-w-55 leading-relaxed">
                             Track the best deals at Canada Computers. Updated automatically every 30 minutes.
                         </p>
                     </div>
