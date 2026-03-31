@@ -11,6 +11,10 @@ const MESSAGES = [
     [
         { text: 'Note: this website will not actively look for member pricing.' },
     ],
+    [
+        { text: '🚧 Website still in beta' },
+        { text: 'Make sure to refresh the page once in a while' },
+    ],
 ];
 
 export default function TopBanner() {

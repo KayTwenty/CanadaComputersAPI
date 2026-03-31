@@ -46,17 +46,26 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_CA",
-    url: "/",
+    url: SITE_URL,
     siteName: "CCDeals",
     title: "CCDeals | Canada Computers Deals Tracker",
     description:
       "Track the best on-sale deals at Canada Computers. Desktops, RAM, CPUs, and GPUs sorted by biggest savings.",
+    images: [
+      {
+        url: "/opengraph-image",
+        width: 1200,
+        height: 630,
+        alt: "CCDeals — Canada Computers Deals Tracker",
+      },
+    ],
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "CCDeals | Canada Computers Deals Tracker",
     description:
       "Track the best on-sale deals at Canada Computers. Desktops, RAM, CPUs, and GPUs sorted by biggest savings.",
+    images: ["/opengraph-image"],
   },
 };
 
@@ -81,6 +90,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
+        <meta name="theme-color" content="#dc2626" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
