@@ -29,10 +29,14 @@ export default function Deals({
     storeId = null,
     storeName = 'All Stores',
     baseUrl = '/api/deals/desktops',
+    enabled = true,
+    onCount,
 }: {
     storeId?: number | null;
     storeName?: string;
     baseUrl?: string;
+    enabled?: boolean;
+    onCount?: (count: number) => void;
 }) {
     const [products, setProducts] = useState<Product[]>([]);
     const [isLoaded, setIsLoaded] = useState(false);
@@ -45,6 +49,8 @@ export default function Deals({
     const retryCountRef = useRef(0);
     const lastStoreKeyRef = useRef('');
     const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const onCountRef = useRef(onCount);
+    onCountRef.current = onCount;
 
     // Responsive card width: full-ish on mobile, fixed on desktop
     useEffect(() => {
@@ -57,6 +63,8 @@ export default function Deals({
     }, []);
 
     useEffect(() => {
+        if (!enabled) return;   // wait until section is near the viewport
+
         const storeKey = `${storeId}|${baseUrl}`;
         if (storeKey !== lastStoreKeyRef.current) {
             retryCountRef.current = 0;
@@ -120,7 +128,10 @@ export default function Deals({
             controller.abort();
             if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
         };
-    }, [storeId, baseUrl, fetchKey]);
+    }, [storeId, baseUrl, fetchKey, enabled]);
+
+    // Notify parent of deal count whenever products change
+    useEffect(() => { onCountRef.current?.(products.length); }, [products.length]);
 
     // Reset carousel position when sort changes
     useEffect(() => {
@@ -297,7 +308,7 @@ export default function Deals({
                     className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth"
                     style={{ gap: GAP, scrollbarWidth: 'none', paddingBottom: 4 }}
                 >
-                    {sortedProducts.map(product => {
+                    {sortedProducts.map((product, i) => {
                         const sale = parseFloat(product.price.replace(/[$,]/g, ''));
                         const reg = parseFloat(product.regular_price.replace(/[$,]/g, ''));
                         const savingsAmt = (reg - sale).toFixed(2);
@@ -311,8 +322,8 @@ export default function Deals({
                                 href={product.link}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="snap-start flex-none rounded-2xl border border-slate-200/80 bg-white shadow-sm hover:shadow-xl hover:border-slate-300 hover:-translate-y-0.5 transition-all duration-300 flex flex-col overflow-hidden group"
-                                style={{ width: cardWidth }}
+                                className="animate-card-in snap-start flex-none rounded-2xl border border-slate-200/80 bg-white shadow-sm hover:shadow-xl hover:border-slate-300 hover:-translate-y-0.5 transition-all duration-300 flex flex-col overflow-hidden group"
+                                style={{ width: cardWidth, animationDelay: `${Math.min(i * 40, 300)}ms` }}
                             >
                                 {/* ── Image area ─────────────────────────── */}
                                 <div className="relative bg-linear-to-b from-slate-50 to-white flex items-center justify-center h-52 p-5">

@@ -30,6 +30,19 @@ export default function HomeContent() {
     const storeName = selectedStore.name;
 
     const [activeTab, setActiveTab] = useState<string>('desktops');
+    // Track which categories have been enabled for fetching.
+    // Desktops is first — enable it immediately. Others unlock when they
+    // scroll within 400 px of the viewport.
+    const [enabledCats, setEnabledCats] = useState<Set<string>>(
+        () => new Set(['desktops'])
+    );
+    const [catCounts, setCatCounts] = useState<Record<string, number>>({});
+
+    useEffect(() => {
+        const total = Object.values(catCounts).reduce((s, n) => s + n, 0);
+        document.title = total > 0 ? `🔥 ${total} Deals | CCDeals` : 'CCDeals';
+        return () => { document.title = 'CCDeals'; };
+    }, [catCounts]);
     const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
     const tabBarRef = useRef<HTMLDivElement>(null);
     const isScrollingRef = useRef(false);
@@ -43,7 +56,7 @@ export default function HomeContent() {
         gpu:      useLastUpdated('__gpu__'),
     };
 
-    // Intersection observer for auto-highlighting the tab as user scrolls
+    // Intersection observer — auto-highlights tab + enables lazy fetch
     useEffect(() => {
         const observers: IntersectionObserver[] = [];
         for (const cat of CATEGORIES) {
@@ -51,11 +64,20 @@ export default function HomeContent() {
             if (!el) continue;
             const obs = new IntersectionObserver(
                 ([entry]) => {
-                    if (entry.isIntersecting && !isScrollingRef.current) {
-                        setActiveTab(cat.id);
+                    if (entry.isIntersecting) {
+                        if (!isScrollingRef.current) setActiveTab(cat.id);
+                        // Unlock fetching for this category once it is near view
+                        setEnabledCats(prev => {
+                            if (prev.has(cat.id)) return prev;
+                            const next = new Set(prev);
+                            next.add(cat.id);
+                            return next;
+                        });
                     }
                 },
-                { rootMargin: '-120px 0px -60% 0px', threshold: 0 },
+                // 400 px bottom margin = start fetching before the section
+                // actually enters the visible area
+                { rootMargin: '0px 0px 400px 0px', threshold: 0 },
             );
             obs.observe(el);
             observers.push(obs);
@@ -180,7 +202,7 @@ export default function HomeContent() {
                                 <TbArrowRight size={16} />
                             </a>
                         </div>
-                        <Deals storeId={storeId} storeName={storeName} baseUrl={cat.baseUrl} />
+                        <Deals storeId={storeId} storeName={storeName} baseUrl={cat.baseUrl} enabled={enabledCats.has(cat.id)} onCount={(n) => setCatCounts(prev => ({ ...prev, [cat.id]: n }))} />
 
                         {/* Divider between sections */}
                         {!isLast && <div className="mt-10 border-t border-slate-100" />}

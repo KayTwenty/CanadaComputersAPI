@@ -329,6 +329,33 @@ def get_cached_gpu_deals(store_id=None):
 
 MAX_PAGES = 10  # hard cap per category to avoid runaway scrapes
 
+VALID_CATEGORIES = {'desktops', 'memory', 'cpu', 'gpu', 'laptops'}
+
+# ─── Rate limiting (token bucket, no external dependency) ─────────────────────
+# Each unique IP gets its own bucket.  Buckets refill at `_RL_RATE` tokens/sec
+# up to `_RL_BURST`.  A request costs 1 token; cost is higher for /search since
+# it always hits Canada Computers live.
+_RL_RATE  = 2     # tokens refilled per second
+_RL_BURST = 10    # maximum burst size
+_rl_buckets: dict = {}   # ip -> [tokens: float, last_refill: float]
+_rl_lock = threading.Lock()
+
+def rate_limit_check(ip: str, cost: int = 1) -> bool:
+    """Return True if the request is allowed, False if it should be rejected (429).
+    Thread-safe; no external dependencies."""
+    now = time.monotonic()
+    with _rl_lock:
+        if ip not in _rl_buckets:
+            _rl_buckets[ip] = [float(_RL_BURST), now]
+        bucket = _rl_buckets[ip]
+        elapsed = now - bucket[1]
+        bucket[0] = min(_RL_BURST, bucket[0] + elapsed * _RL_RATE)
+        bucket[1] = now
+        if bucket[0] >= cost:
+            bucket[0] -= cost
+            return True
+        return False
+
 USER_AGENTS = [
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0',

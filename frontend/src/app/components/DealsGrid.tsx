@@ -357,7 +357,7 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
                 </div>
             ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {sortedProducts.map(product => {
+                {sortedProducts.map((product, i) => {
                     const sale = parseFloat(product.price.replace(/[$,]/g, ''));
                     const reg = parseFloat(product.regular_price.replace(/[$,]/g, ''));
                     const savings = (reg - sale).toFixed(2);
@@ -371,7 +371,8 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
                             href={product.link}
                             target="_blank"
                             rel="noreferrer"
-                            className="rounded-2xl border border-slate-200/80 bg-white shadow-sm hover:shadow-xl hover:border-slate-300 hover:-translate-y-0.5 transition-all duration-300 flex flex-col overflow-hidden group"
+                            className="animate-card-in rounded-2xl border border-slate-200/80 bg-white shadow-sm hover:shadow-xl hover:border-slate-300 hover:-translate-y-0.5 transition-all duration-300 flex flex-col overflow-hidden group"
+                            style={{ animationDelay: `${Math.min(i * 30, 300)}ms` }}
                         >
                             {/* Image area */}
                             <div className="relative bg-linear-to-b from-slate-50 to-white flex items-center justify-center h-52 p-5">

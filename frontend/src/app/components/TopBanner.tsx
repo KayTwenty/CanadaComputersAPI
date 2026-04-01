@@ -6,14 +6,15 @@ const MESSAGES = [
     [
         { text: '🍁 Proudly Canadian' },
         { text: 'Not affiliated with Canada Computers' },
-        { text: 'Your location never leaves this website' },
+        { text: 'Your location never leaves this device' },
     ],
     [
-        { text: 'Note: this website will not actively look for member pricing.' },
+        { text: '💡 Prices update automatically every 30 minutes' },
+        { text: 'Member pricing not included' },
     ],
     [
-        { text: '🚧 Website still in beta' },
-        { text: 'Make sure to refresh the page once in a while' },
+        { text: '❤️ Save deals to Favourites for quick access' },
+        { text: 'Filter by store, brand, and price range' },
     ],
 ];
 
