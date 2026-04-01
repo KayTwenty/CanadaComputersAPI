@@ -640,3 +640,173 @@ def cpu_deals(store_id=None):
 def gpu_deals(store_id=None):
     """Scrape on-sale graphics card products from Canada Computers."""
     return _scrape_sale_items('https://www.canadacomputers.com/en/914/graphics-cards', store_id)
+
+
+# ─── Streaming generators ─────────────────────────────────────────────────────
+
+def _stream_sale_items_gen(base_url: str, store_id, store_cache_key: str, ttl: float):
+    """Generator: yields page-batches of on-sale products for streaming responses.
+    If cached, yields the full list immediately and returns."""
+    cached = _cache_get(store_cache_key, ttl)
+    if cached is not None:
+        yield cached
+        return
+
+    all_products: list = []
+    page = 1
+
+    while page <= MAX_PAGES:
+        url = f'{base_url}?page={page}'
+        if store_id is not None:
+            url += f'&pickup={store_id}'
+        try:
+            data = fetch_page(url, fast=store_id is not None)
+        except Exception:
+            break
+
+        soup = BeautifulSoup(data, 'html.parser')
+        articles = soup.find_all('article', class_='product-miniature')
+        if not articles:
+            break
+
+        page_batch: list = []
+        for product in articles:
+            thumb = product.find('a', class_='product-thumbnail')
+            item_code = thumb.get('data-id', '') if thumb else ''
+            desc_div = product.find('div', class_='product-description')
+            if not desc_div:
+                continue
+            price = desc_div.get('data-price', 'N/A')
+            regular_price = desc_div.get('data-regular_price', price)
+            if price == regular_price:
+                continue
+            title_tag = product.find('h2', class_='product-title')
+            if not title_tag:
+                continue
+            a_tag = title_tag.find('a')
+            title = a_tag.text.strip()
+            link = a_tag['href']
+            avail_div = product.find('div', class_='available-tag')
+            if avail_div:
+                smalls = avail_div.find_all('small', class_='pq-hdr-bolder')
+                online_availability = smalls[0].get_text(strip=True) if smalls else 'unknown'
+                instore_availability = smalls[1].get_text(strip=True) if len(smalls) > 1 else 'unknown'
+            else:
+                online_availability = 'unknown'
+                instore_availability = 'unknown'
+            if store_id is not None:
+                il = instore_availability.lower()
+                if 'not available' in il or il == 'unknown':
+                    continue
+            img_tag = thumb.find('img') if thumb else None
+            image_url = (img_tag.get('data-cc-src') or img_tag.get('src', '')) if img_tag else ''
+            page_batch.append({
+                'title': title, 'price': price, 'regular_price': regular_price,
+                'item_code': item_code, 'online_availability': online_availability,
+                'instore_availability': instore_availability, 'link': link,
+                'image_url': image_url,
+            })
+
+        if page_batch:
+            all_products.extend(page_batch)
+            yield page_batch
+
+        page += 1
+
+    if all_products:
+        _cache_set(store_cache_key, all_products)
+
+
+def _stream_desktop_deals_gen(store_id=None):
+    """Generator: yields desktop deal page-batches for streaming."""
+    store_key = _ALL_STORES_KEY if store_id is None else str(store_id)
+    ttl = _CACHE_TTL if store_id is None else _STORE_CACHE_TTL
+
+    cached = _cache_get(store_key, ttl)
+    if cached is not None:
+        yield cached
+        return
+
+    all_products: list = []
+    page = 1
+
+    while page <= MAX_PAGES:
+        url = f'https://www.canadacomputers.com/en/931/desktop-computers?page={page}'
+        if store_id is not None:
+            url += f'&pickup={store_id}'
+        try:
+            data = fetch_page(url, fast=store_id is not None)
+        except Exception:
+            break
+
+        soup = BeautifulSoup(data, 'html.parser')
+        articles = soup.find_all('article', class_='product-miniature')
+        if not articles:
+            break
+
+        page_batch: list = []
+        for product in articles:
+            thumb = product.find('a', class_='product-thumbnail')
+            item_code = thumb.get('data-id', '') if thumb else ''
+            if not DESKTOP_ITEM_CODE_RE.match(item_code):
+                continue
+            desc_div = product.find('div', class_='product-description')
+            if not desc_div:
+                continue
+            price = desc_div.get('data-price', 'N/A')
+            regular_price = desc_div.get('data-regular_price', price)
+            if price == regular_price:
+                continue
+            title_tag = product.find('h2', class_='product-title')
+            if not title_tag:
+                continue
+            a_tag = title_tag.find('a')
+            title = a_tag.text.strip()
+            link = a_tag['href']
+            avail_div = product.find('div', class_='available-tag')
+            if avail_div:
+                smalls = avail_div.find_all('small', class_='pq-hdr-bolder')
+                online_availability = smalls[0].get_text(strip=True) if smalls else 'unknown'
+                instore_availability = smalls[1].get_text(strip=True) if len(smalls) > 1 else 'unknown'
+            else:
+                online_availability = 'unknown'
+                instore_availability = 'unknown'
+            if store_id is not None:
+                il = instore_availability.lower()
+                if 'not available' in il or il == 'unknown':
+                    continue
+            img_tag = thumb.find('img') if thumb else None
+            image_url = (img_tag.get('data-cc-src') or img_tag.get('src', '')) if img_tag else ''
+            page_batch.append({
+                'title': title, 'price': price, 'regular_price': regular_price,
+                'item_code': item_code, 'online_availability': online_availability,
+                'instore_availability': instore_availability, 'link': link,
+                'image_url': image_url,
+            })
+
+        if page_batch:
+            all_products.extend(page_batch)
+            yield page_batch
+
+        page += 1
+
+    if all_products:
+        _cache_set(store_key, all_products)
+
+
+def stream_category_gen(category: str, store_id=None):
+    """Public entry point: yields product batches for the given category."""
+    if category == 'desktops':
+        yield from _stream_desktop_deals_gen(store_id)
+    elif category == 'memory':
+        sk = f'mem_{store_id}' if store_id else _MEMORY_CACHE_KEY
+        yield from _stream_sale_items_gen(
+            'https://www.canadacomputers.com/en/1009/memory', store_id, sk, _MEMORY_CACHE_TTL)
+    elif category == 'cpu':
+        sk = f'cpu_{store_id}' if store_id else _CPU_CACHE_KEY
+        yield from _stream_sale_items_gen(
+            'https://www.canadacomputers.com/en/956/cpu', store_id, sk, _CPU_CACHE_TTL)
+    elif category == 'gpu':
+        sk = f'gpu_{store_id}' if store_id else _GPU_CACHE_KEY
+        yield from _stream_sale_items_gen(
+            'https://www.canadacomputers.com/en/914/graphics-cards', store_id, sk, _GPU_CACHE_TTL)

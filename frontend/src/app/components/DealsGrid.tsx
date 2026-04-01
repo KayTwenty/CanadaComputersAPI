@@ -56,13 +56,14 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
         setProducts([]);
         setOffline(false);
 
-        const url = storeId ? `${baseUrl}?pickup=${storeId}` : baseUrl;
-
+        const category = baseUrl.split('/').pop() ?? 'desktops';
+        const url = `/api/deals/stream?category=${category}${storeId ? `&pickup=${storeId}` : ''}`;
         const controller = new AbortController();
 
-        fetch(url, { signal: controller.signal })
-            .then(res => {
-                if (!res.ok) {
+        async function run() {
+            try {
+                const res = await fetch(url, { signal: controller.signal });
+                if (!res.ok || !res.body) {
                     if (retryCountRef.current < 3) {
                         retryCountRef.current++;
                         retryTimerRef.current = setTimeout(() => setFetchKey(k => k + 1), 20000);
@@ -70,20 +71,36 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
                         setOffline(true);
                         setIsLoaded(true);
                     }
-                    return null;
+                    return;
                 }
-                return res.json() as Promise<{ products: Product[] }>;
-            })
-            .then(data => {
-                if (!data) return;
-                setProducts(data.products ?? []);
-                setIsLoaded(true);
-            })
-            .catch(err => {
+                const reader = res.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() ?? '';
+                    for (const line of lines) {
+                        if (!line.trim()) continue;
+                        try {
+                            const msg = JSON.parse(line) as { batch?: Product[]; done?: boolean };
+                            if (Array.isArray(msg.batch) && msg.batch.length > 0) {
+                                setProducts(prev => [...prev, ...msg.batch!]);
+                            }
+                            if (msg.done) setIsLoaded(true);
+                        } catch { /* ignore malformed lines */ }
+                    }
+                }
+            } catch (err) {
                 if ((err as Error).name === 'AbortError') return;
                 setOffline(true);
-                setIsLoaded(true);
-            });
+            }
+            setIsLoaded(true);
+        }
+
+        run();
 
         return () => {
             controller.abort();
@@ -135,7 +152,7 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
         );
     }
 
-    if (!isLoaded) {
+    if (!isLoaded && products.length === 0) {
         return (
             <div className="flex flex-col gap-6">
                 <div className="flex items-center gap-3 text-sm text-slate-500">
@@ -181,6 +198,15 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
                         {lastUpdated && (
                             <p className="text-xs text-slate-400 flex items-center gap-1">
                                 <TbRefresh size={11} />{lastUpdated}
+                            </p>
+                        )}
+                        {!isLoaded && (
+                            <p className="text-xs text-violet-500 flex items-center gap-1.5">
+                                <svg className="animate-spin h-3 w-3 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                                </svg>
+                                Scanning more pages…
                             </p>
                         )}
                     </div>
