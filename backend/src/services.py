@@ -152,28 +152,44 @@ def get_cached_desktop_deals(store_id=None):
             _cache_set(store_key, result['products'])
         return result
 
-# Background refresh — all-stores cache, runs every 30 minutes
+# Background refresh
+# Proactive refresh: re-scrape a global key when it has used 80% of its TTL so
+# users never wait on a cold scrape. The old cache keeps serving while the new
+# scrape runs in the background (stale-while-revalidate).
+_PROACTIVE_TTL = int(0.80 * _CACHE_TTL)   # 24 min  (full TTL = 30 min)
 
-_bg_fetching = False
-_bg_lock = threading.Lock()
+# Per-key non-blocking locks prevent two threads from scraping the same category.
+_cat_refresh_locks: dict = {}
+_cat_refresh_locks_mutex = threading.Lock()
 
-def _refresh_all_stores():
-    global _bg_fetching
-    with _bg_lock:
-        if _bg_fetching:
-            return
-        _bg_fetching = True
+def _get_cat_refresh_lock(key: str) -> threading.Lock:
+    with _cat_refresh_locks_mutex:
+        if key not in _cat_refresh_locks:
+            _cat_refresh_locks[key] = threading.Lock()
+        return _cat_refresh_locks[key]
+
+def _bg_refresh(cache_key: str, ttl: float, scrape_fn, label: str) -> None:
+    """Refresh *cache_key* if stale or within the proactive window.
+    Uses a non-blocking lock so concurrent callers skip rather than queue up."""
+    if _cache_get(cache_key, _PROACTIVE_TTL) is not None:
+        return  # still fresh — nothing to do yet
+    lock = _get_cat_refresh_lock(cache_key)
+    if not lock.acquire(blocking=False):
+        return  # another thread is already scraping this key
     try:
-        print('[deals] Starting background scrape (all stores)...')
-        result = desktop_deals()
-        if result['products']:
-            _cache_set(_ALL_STORES_KEY, result['products'])
-        print(f"[deals] Done. {len(result['products'])} deals cached.")
+        if _cache_get(cache_key, _PROACTIVE_TTL) is not None:  # re-check inside lock
+            return
+        print(f'[{label}] Background refresh starting...')
+        result = scrape_fn()
+        if result.get('products'):
+            _cache_set(cache_key, result['products'])
+            print(f'[{label}] Done. {len(result["products"])} items cached.')
+        else:
+            print(f'[{label}] Warning: refresh returned 0 items — keeping old cache.')
     except Exception as e:
-        print(f'[deals] Background scrape failed: {e}')
+        print(f'[{label}] Background refresh failed: {e}')
     finally:
-        with _bg_lock:
-            _bg_fetching = False
+        lock.release()
 
 _PRELOAD_WORKERS = 4  # parallel store scrapers
 
@@ -212,95 +228,37 @@ def _refresh_store_locations():
 
 def _background_loop():
     """
-    On startup: if the all-stores cache is still fresh, pre-load any stale per-store
-    caches and wait out the remaining TTL. Otherwise scrape everything now.
-    Repeats every 30 minutes.
+    Keeps all global caches warm using a proactive stale-while-revalidate strategy:
+    - On startup:  immediately refreshes every stale/missing cache in parallel,
+                   then pre-loads all per-store desktop caches.
+    - Every 60 s:  fires fire-and-forget threads for any cache that has passed
+                   80% of its TTL, so users always get a cached response.
     """
-    # One-time startup check — use existing cache if still fresh
-    with _db_lock:
-        conn = _db_connect()
-        try:
-            row = conn.execute(
-                'SELECT scraped_at FROM deals_cache WHERE store_key = ?',
-                (_ALL_STORES_KEY,)
-            ).fetchone()
-        finally:
-            conn.close()
+    # _JOBS is evaluated at call time so all scraper functions are already defined.
+    _JOBS = [
+        (_ALL_STORES_KEY,   _CACHE_TTL,        desktop_deals,  'desktops'),
+        (_MEMORY_CACHE_KEY, _MEMORY_CACHE_TTL, memory_deals,   'memory'),
+        (_CPU_CACHE_KEY,    _CPU_CACHE_TTL,     cpu_deals,      'cpu'),
+        (_GPU_CACHE_KEY,    _GPU_CACHE_TTL,     gpu_deals,      'gpu'),
+        (_LAPTOP_CACHE_KEY, _LAPTOP_CACHE_TTL,  laptop_deals,   'laptops'),
+    ]
 
-    if row:
-        age = time.time() - row[0]
-        remaining = _CACHE_TTL - age
-        if remaining > 0:
-            print(f'[deals] Cache is fresh ({int(age)}s old). Pre-loading store locations + categories; next full scrape in {int(remaining)}s.')
-            _refresh_store_locations()
-            with ThreadPoolExecutor(max_workers=4) as pool:
-                pool.submit(_refresh_memory)
-                pool.submit(_refresh_cpu)
-                pool.submit(_refresh_gpu)
-                pool.submit(_refresh_laptops)
-            time.sleep(remaining)
+    print('[deals] Startup: warming all global caches in parallel...')
+    # Block until all startup refreshes finish so per-store pre-load starts
+    # with warm global caches and doesn't race against user requests.
+    with ThreadPoolExecutor(max_workers=len(_JOBS)) as pool:
+        for args in _JOBS:
+            pool.submit(_bg_refresh, *args)
 
+    # Pre-load per-store desktop caches now that globals are warm.
+    _refresh_store_locations()
+
+    # Proactive refresh loop — fire background threads, don't block.
     while True:
-        _refresh_all_stores()
-        _refresh_store_locations()
-        with ThreadPoolExecutor(max_workers=4) as pool:
-            pool.submit(_refresh_memory)
-            pool.submit(_refresh_cpu)
-            pool.submit(_refresh_gpu)
-            pool.submit(_refresh_laptops)
-        time.sleep(_CACHE_TTL)
-
-def _refresh_memory():
-    """Scrape and cache memory deals if stale."""
-    if _cache_get(_MEMORY_CACHE_KEY, _MEMORY_CACHE_TTL) is not None:
-        return
-    try:
-        print('[memory] Starting background scrape...')
-        result = memory_deals()
-        if result['products']:
-            _cache_set(_MEMORY_CACHE_KEY, result['products'])
-        print(f"[memory] Done. {len(result['products'])} deals cached.")
-    except Exception as e:
-        print(f'[memory] Background scrape failed: {e}')
-
-def _refresh_cpu():
-    """Scrape and cache CPU deals if stale."""
-    if _cache_get(_CPU_CACHE_KEY, _CPU_CACHE_TTL) is not None:
-        return
-    try:
-        print('[cpu] Starting background scrape...')
-        result = cpu_deals()
-        if result['products']:
-            _cache_set(_CPU_CACHE_KEY, result['products'])
-        print(f"[cpu] Done. {len(result['products'])} deals cached.")
-    except Exception as e:
-        print(f'[cpu] Background scrape failed: {e}')
-
-def _refresh_gpu():
-    """Scrape and cache GPU deals if stale."""
-    if _cache_get(_GPU_CACHE_KEY, _GPU_CACHE_TTL) is not None:
-        return
-    try:
-        print('[gpu] Starting background scrape...')
-        result = gpu_deals()
-        if result['products']:
-            _cache_set(_GPU_CACHE_KEY, result['products'])
-        print(f"[gpu] Done. {len(result['products'])} deals cached.")
-    except Exception as e:
-        print(f'[gpu] Background scrape failed: {e}')
-
-def _refresh_laptops():
-    """Scrape and cache laptop deals if stale."""
-    if _cache_get(_LAPTOP_CACHE_KEY, _LAPTOP_CACHE_TTL) is not None:
-        return
-    try:
-        print('[laptops] Starting background scrape...')
-        result = laptop_deals()
-        if result['products']:
-            _cache_set(_LAPTOP_CACHE_KEY, result['products'])
-        print(f"[laptops] Done. {len(result['products'])} deals cached.")
-    except Exception as e:
-        print(f'[laptops] Background scrape failed: {e}')
+        time.sleep(60)
+        for args in _JOBS:
+            t = threading.Thread(target=_bg_refresh, args=args, daemon=True)
+            t.start()
 
 def start_deals_refresh():
     t = threading.Thread(target=_background_loop, daemon=True)
@@ -706,8 +664,7 @@ def get_cached_laptop_deals(store_id=None):
         return result
 
 
-# ─── Streaming generators ─────────────────────────────────────────────────────
-
+# Streaming generators
 def _stream_sale_items_gen(base_url: str, store_id, store_cache_key: str, ttl: float):
     """Generator: yields page-batches of on-sale products for streaming responses.
     If cached, yields the full list immediately and returns."""
