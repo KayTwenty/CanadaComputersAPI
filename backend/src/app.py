@@ -2,7 +2,7 @@ from flask import Flask, Response, request as flask_request, stream_with_context
 from flask_restful import Api
 import json
 
-from endpoints import Search, DesktopDeals, MemoryDeals, CpuDeals, GpuDeals, CacheStatus
+from endpoints import Search, DesktopDeals, MemoryDeals, CpuDeals, GpuDeals, LaptopDeals, CacheStatus
 from services import start_deals_refresh, stream_category_gen, VALID_STORE_IDS
 
 app = Flask(__name__)
@@ -13,6 +13,7 @@ api.add_resource(DesktopDeals, '/deals/desktops')
 api.add_resource(MemoryDeals, '/deals/memory')
 api.add_resource(CpuDeals, '/deals/cpu')
 api.add_resource(GpuDeals, '/deals/gpu')
+api.add_resource(LaptopDeals, '/deals/laptops')
 api.add_resource(CacheStatus, '/status')
 
 

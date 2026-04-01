@@ -16,8 +16,8 @@ interface Product {
     image_url: string;
 }
 
-const DESKTOP_CARD_WIDTH = 400;
-const GAP = 20;
+const DESKTOP_CARD_WIDTH = 340;
+const GAP = 16;
 
 function isAvailable(str: string): boolean {
     if (!str) return false;
@@ -189,13 +189,15 @@ export default function Deals({
                 <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
                     <span>⚠ Backend temporarily unavailable — deals will appear once the service is back.</span>
                 </div>
-                <div className="flex gap-5 overflow-hidden">
-                    {Array.from({ length: 4 }).map((_, i) => (
-                        <div key={i} className="flex-none bg-white rounded-3xl shadow-sm border border-slate-100 p-6 animate-pulse" style={{ width: cardWidth }}>
-                            <div className="bg-slate-100 rounded-2xl h-56 mb-6" />
-                            <div className="h-4 bg-slate-100 rounded w-3/4 mb-3" />
-                            <div className="h-4 bg-slate-100 rounded w-1/2 mb-6" />
-                            <div className="h-12 bg-slate-100 rounded-2xl w-full" />
+                <div className="flex gap-4 overflow-hidden">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                        <div key={i} className="flex-none bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden animate-pulse" style={{ width: cardWidth }}>
+                            <div className="bg-slate-100 h-48" />
+                            <div className="p-4 space-y-3">
+                                <div className="h-4 bg-slate-100 rounded w-5/6" />
+                                <div className="h-4 bg-slate-100 rounded w-2/3" />
+                                <div className="h-8 bg-slate-100 rounded-lg w-1/2 mt-2" />
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -215,13 +217,15 @@ export default function Deals({
                         ? `Fetching live inventory for ${storeName}. First load may take a minute…`
                         : 'Loading deals…'}
                 </div>
-                <div className="flex gap-5 overflow-hidden">
-                    {Array.from({ length: 4 }).map((_, i) => (
-                        <div key={i} className="flex-none bg-white rounded-3xl shadow-sm border border-slate-100 p-6 animate-pulse" style={{ width: cardWidth }}>
-                            <div className="bg-slate-100 rounded-2xl h-56 mb-6" />
-                            <div className="h-4 bg-slate-100 rounded w-3/4 mb-3" />
-                            <div className="h-4 bg-slate-100 rounded w-1/2 mb-6" />
-                            <div className="h-12 bg-slate-100 rounded-2xl w-full" />
+                <div className="flex gap-4 overflow-hidden">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                        <div key={i} className="flex-none bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden animate-pulse" style={{ width: cardWidth }}>
+                            <div className="bg-slate-100 h-48" />
+                            <div className="p-4 space-y-3">
+                                <div className="h-4 bg-slate-100 rounded w-5/6" />
+                                <div className="h-4 bg-slate-100 rounded w-2/3" />
+                                <div className="h-8 bg-slate-100 rounded-lg w-1/2 mt-2" />
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -240,49 +244,51 @@ export default function Deals({
     ];
 
     return (
-        <div className="flex flex-col gap-4">
-            {/* Sort controls */}
-            <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs font-medium text-slate-400 mr-1">Sort by</span>
-                {SORT_OPTIONS.map(opt => (
-                    <button
-                        key={opt.key}
-                        onClick={() => setSort(opt.key)}
-                        className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-all ${
-                            sort === opt.key
-                                ? 'bg-slate-800 text-white border-slate-800'
-                                : 'bg-white text-slate-500 border-slate-200 hover:border-slate-400 hover:text-slate-700'
-                        }`}
-                    >
-                        {opt.label}
-                    </button>
-                ))}
+        <div className="flex flex-col gap-3">
+            {/* Sort + count bar */}
+            <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-medium text-slate-400">Sort</span>
+                    {SORT_OPTIONS.map(opt => (
+                        <button
+                            key={opt.key}
+                            onClick={() => setSort(opt.key)}
+                            className={`text-[11px] font-semibold px-2.5 py-1 rounded-md border transition-all ${
+                                sort === opt.key
+                                    ? 'bg-slate-900 text-white border-slate-900'
+                                    : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:text-slate-700'
+                            }`}
+                        >
+                            {opt.label}
+                        </button>
+                    ))}
+                </div>
+                <div className="flex items-center gap-2 text-xs text-slate-400">
+                    {!isLoaded && (
+                        <span className="inline-flex items-center gap-1">
+                            <svg className="animate-spin h-3 w-3 text-violet-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                            </svg>
+                            Scanning…
+                        </span>
+                    )}
+                    <span className="tabular-nums font-medium">{activeIndex + 1} / {sortedProducts.length}</span>
+                </div>
             </div>
 
-            {/* Loading more indicator */}
-            {!isLoaded && (
-                <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                    <svg className="animate-spin h-3 w-3 text-violet-400 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                    </svg>
-                    Scanning more pages…
-                </div>
-            )}
-
-            {/* Carousel + arrows */}
-            <div className="relative">
-                {/* Left arrow — hidden on mobile (swipe instead) */}
+            {/* Carousel */}
+            <div className="relative group/carousel">
+                {/* Nav arrows */}
                 <button
                     onClick={prev}
                     disabled={activeIndex === 0}
-                    className="hidden sm:block absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 bg-white border border-slate-200 shadow-md rounded-full p-2 text-slate-600 hover:text-slate-900 hover:border-slate-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="hidden sm:flex absolute -left-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 items-center justify-center bg-white/95 backdrop-blur border border-slate-200 shadow-lg rounded-xl text-slate-600 hover:text-slate-900 hover:border-slate-300 transition-all disabled:opacity-0 disabled:pointer-events-none opacity-0 group-hover/carousel:opacity-100"
                     aria-label="Previous"
                 >
-                    <TbChevronLeft size={20} />
+                    <TbChevronLeft size={18} />
                 </button>
 
-                {/* Scroll container */}
                 <div
                     ref={scrollRef}
                     onScroll={handleScroll}
@@ -294,7 +300,7 @@ export default function Deals({
                     {sortedProducts.map(product => {
                         const sale = parseFloat(product.price.replace(/[$,]/g, ''));
                         const reg = parseFloat(product.regular_price.replace(/[$,]/g, ''));
-                        const savings = (reg - sale).toFixed(2);
+                        const savingsAmt = (reg - sale).toFixed(2);
                         const pct = reg > 0 ? Math.round((reg - sale) / reg * 100) : 0;
                         const onlineAvail = isAvailable(product.online_availability);
                         const instoreAvail = isAvailable(product.instore_availability);
@@ -305,12 +311,19 @@ export default function Deals({
                                 href={product.link}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="snap-start flex-none bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-lg hover:border-slate-200 transition-all duration-300 flex flex-col overflow-hidden group"
+                                className="snap-start flex-none rounded-2xl border border-slate-200/80 bg-white shadow-sm hover:shadow-xl hover:border-slate-300 hover:-translate-y-0.5 transition-all duration-300 flex flex-col overflow-hidden group"
                                 style={{ width: cardWidth }}
                             >
-                                {/* Image */}
-                                <div className="relative bg-slate-50 flex items-center justify-center h-60 p-6">
-                                    <div className="absolute top-3 left-3">
+                                {/* ── Image area ─────────────────────────── */}
+                                <div className="relative bg-linear-to-b from-slate-50 to-white flex items-center justify-center h-52 p-5">
+                                    {/* Percent-off badge */}
+                                    {pct > 0 && (
+                                        <div className="absolute top-3 right-3 bg-rose-500 text-white text-[11px] font-bold px-2 py-0.5 rounded-md shadow-sm">
+                                            -{pct}%
+                                        </div>
+                                    )}
+                                    {/* Actions */}
+                                    <div className="absolute top-3 left-3 flex flex-col gap-1.5">
                                         <FavoriteButton product={product} variant="icon" />
                                     </div>
                                     {product.image_url ? (
@@ -318,58 +331,56 @@ export default function Deals({
                                         <img
                                             src={product.image_url}
                                             alt={product.title}
-                                            className="object-contain max-h-48 max-w-full"
+                                            className="object-contain max-h-40 max-w-full drop-shadow-sm group-hover:scale-105 transition-transform duration-300"
                                             referrerPolicy="no-referrer"
                                             onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                         />
                                     ) : (
-                                        <div className="w-48 h-48 bg-slate-200 rounded-2xl" />
+                                        <div className="w-36 h-36 bg-slate-100 rounded-xl" />
                                     )}
                                 </div>
 
-                                {/* Body */}
-                                <div className="flex flex-col flex-1 p-6 gap-4">
-                                    {/* Title */}
-                                    <p className="text-sm font-semibold text-slate-800 leading-snug line-clamp-2 group-hover:text-violet-700 transition-colors min-h-11">
-                                        {product.title}
-                                    </p>
-
-                                    {/* Divider */}
-                                    <div className="border-t border-slate-100" />
-
-                                    {/* Pricing */}
-                                    <div className="flex items-end justify-between">
-                                        <div>
-                                            <p className="text-xs text-slate-400 mb-0.5">Sale price</p>
-                                            <p className="text-3xl font-extrabold text-slate-900 leading-none">{product.price}</p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="text-xs text-slate-400 mb-0.5">Was</p>
-                                            <p className="text-base text-slate-400 line-through leading-none">{product.regular_price}</p>
-                                        </div>
+                                {/* ── Content ────────────────────────────── */}
+                                <div className="flex flex-col flex-1 px-5 pb-5 pt-4 gap-3">
+                                    {/* Title + item code */}
+                                    <div>
+                                        <p className="text-[13px] font-semibold text-slate-800 leading-snug line-clamp-2 group-hover:text-violet-700 transition-colors">
+                                            {product.title}
+                                        </p>
+                                        <p className="text-[10px] text-slate-400 font-mono mt-1 tracking-wide">{product.item_code}</p>
                                     </div>
 
-                                    {/* Savings row */}
-                                    <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-2.5">
-                                        <TbTag size={15} className="text-emerald-600 shrink-0" />
-                                        <span className="text-base font-extrabold text-emerald-700">You save ${savings}</span>
-                                        <span className="ml-auto text-xs font-semibold text-emerald-500">{pct}% off</span>
+                                    {/* Price block */}
+                                    <div className="flex items-baseline gap-3">
+                                        <span className="text-2xl font-extrabold text-slate-900 tracking-tight">{product.price}</span>
+                                        <span className="text-sm text-slate-400 line-through">{product.regular_price}</span>
                                     </div>
 
-                                    {/* Item code */}
-                                    <p className="text-xs text-slate-400 font-mono tracking-wide">{product.item_code}</p>
+                                    {/* Savings chip */}
+                                    <div className="flex items-center gap-1.5 bg-emerald-50 rounded-lg px-3 py-1.5 w-fit">
+                                        <TbTag size={13} className="text-emerald-600" />
+                                        <span className="text-xs font-bold text-emerald-700">Save ${savingsAmt}</span>
+                                    </div>
 
-                                    {/* Availability */}
-                                    <div className="flex gap-2 flex-wrap mt-auto">
-                                        <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border ${onlineAvail ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>
-                                            <TbWorld size={13} />
-                                            {onlineAvail ? 'Available Online' : 'Not Online'}
+                                    {/* Availability row */}
+                                    <div className="flex items-center gap-3 mt-auto pt-2 border-t border-slate-100">
+                                        <span className="flex items-center gap-1 text-[11px] font-medium">
+                                            <span className={`w-1.5 h-1.5 rounded-full ${onlineAvail ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                                            <TbWorld size={12} className={onlineAvail ? 'text-emerald-600' : 'text-slate-400'} />
+                                            <span className={onlineAvail ? 'text-emerald-700' : 'text-slate-400'}>
+                                                {onlineAvail ? 'Online' : 'Not Online'}
+                                            </span>
                                         </span>
-                                        <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border ${instoreAvail ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>
-                                            <TbBuildingStore size={13} />
-                                            {instoreAvail ? 'In-Store' : 'Not In-Store'}
+                                        <span className="flex items-center gap-1 text-[11px] font-medium">
+                                            <span className={`w-1.5 h-1.5 rounded-full ${instoreAvail ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                                            <TbBuildingStore size={12} className={instoreAvail ? 'text-emerald-600' : 'text-slate-400'} />
+                                            <span className={instoreAvail ? 'text-emerald-700' : 'text-slate-400'}>
+                                                {instoreAvail ? 'In-Store' : 'Not In-Store'}
+                                            </span>
                                         </span>
-                                        <ShareButton title={product.title} url={product.link} price={product.price} />
+                                        <span className="ml-auto">
+                                            <ShareButton title={product.title} url={product.link} price={product.price} size="sm" />
+                                        </span>
                                     </div>
                                 </div>
                             </a>
@@ -377,36 +388,33 @@ export default function Deals({
                     })}
                 </div>
 
-                {/* Right arrow — hidden on mobile (swipe instead) */}
                 <button
                     onClick={next}
                     disabled={activeIndex === products.length - 1}
-                    className="hidden sm:block absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 bg-white border border-slate-200 shadow-md rounded-full p-2 text-slate-600 hover:text-slate-900 hover:border-slate-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="hidden sm:flex absolute -right-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 items-center justify-center bg-white/95 backdrop-blur border border-slate-200 shadow-lg rounded-xl text-slate-600 hover:text-slate-900 hover:border-slate-300 transition-all disabled:opacity-0 disabled:pointer-events-none opacity-0 group-hover/carousel:opacity-100"
                     aria-label="Next"
                 >
-                    <TbChevronRight size={20} />
+                    <TbChevronRight size={18} />
                 </button>
             </div>
 
-            {/* Dots */}
-            <div className="flex justify-center items-center gap-1.5 pt-2">
-                {sortedProducts.map((_, i) => (
-                    <button
-                        key={i}
-                        onClick={() => scrollToIndex(i)}
-                        aria-label={`Go to product ${i + 1}`}
-                        className={`rounded-full transition-all duration-300 ${
-                            i === activeIndex
-                                ? 'bg-slate-800 w-6 h-2'
-                                : 'bg-slate-300 hover:bg-slate-400 w-2 h-2'
-                        }`}
-                    />
-                ))}
+            {/* Progress track */}
+            <div className="flex justify-center pt-1">
+                <div className="flex items-center gap-1">
+                    {sortedProducts.map((_, i) => (
+                        <button
+                            key={i}
+                            onClick={() => scrollToIndex(i)}
+                            aria-label={`Go to product ${i + 1}`}
+                            className={`rounded-full transition-all duration-300 ${
+                                i === activeIndex
+                                    ? 'bg-violet-600 w-5 h-1.5'
+                                    : 'bg-slate-200 hover:bg-slate-300 w-1.5 h-1.5'
+                            }`}
+                        />
+                    ))}
+                </div>
             </div>
-
-            <p className="text-center text-xs text-slate-400">
-                {activeIndex + 1} / {sortedProducts.length}
-            </p>
         </div>
     );
 }

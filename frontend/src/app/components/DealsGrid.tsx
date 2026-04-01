@@ -36,6 +36,7 @@ const CATEGORY_BRANDS: Record<string, string[]> = {
     memory:   ['Kingston', 'Corsair', 'G.Skill', 'Crucial', 'TeamGroup', 'Patriot', 'Samsung', 'A-Data', 'PNY', 'Mushkin'],
     cpu:      ['Intel', 'AMD'],
     gpu:      ['ASUS', 'MSI', 'Gigabyte', 'Zotac', 'Sapphire', 'PowerColor', 'XFX', 'ASRock', 'PNY', 'EVGA'],
+    laptops:  ['ASUS', 'MSI', 'Lenovo', 'HP', 'Dell', 'Acer', 'Samsung', 'LG', 'Razer', 'Microsoft'],
 };
 
 function detectBrand(title: string, knownBrands: string[]): string | null {
@@ -179,13 +180,16 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
                 <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
                     <span>⚠ Backend temporarily unavailable — deals will appear once the service is back.</span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {Array.from({ length: 12 }).map((_, i) => (
-                        <div key={i} className="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 animate-pulse">
-                            <div className="bg-slate-100 rounded-2xl h-48 mb-5" />
-                            <div className="h-4 bg-slate-100 rounded w-3/4 mb-3" />
-                            <div className="h-4 bg-slate-100 rounded w-1/2 mb-5" />
-                            <div className="h-10 bg-slate-100 rounded-2xl w-full" />
+                        <div key={i} className="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden animate-pulse">
+                            <div className="bg-slate-50 h-48" />
+                            <div className="p-4 space-y-3">
+                                <div className="h-4 bg-slate-100 rounded w-5/6" />
+                                <div className="h-3 bg-slate-100 rounded w-1/3" />
+                                <div className="h-7 bg-slate-100 rounded w-1/2" />
+                                <div className="h-6 bg-slate-100 rounded-lg w-2/5" />
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -203,13 +207,16 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
                     </svg>
                     {storeId ? `Fetching live inventory for ${storeName}. First load may take a minute…` : 'Loading deals…'}
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {Array.from({ length: 12 }).map((_, i) => (
-                        <div key={i} className="bg-white rounded-3xl shadow-sm border border-slate-100 p-6 animate-pulse">
-                            <div className="bg-slate-100 rounded-2xl h-48 mb-5" />
-                            <div className="h-4 bg-slate-100 rounded w-3/4 mb-3" />
-                            <div className="h-4 bg-slate-100 rounded w-1/2 mb-5" />
-                            <div className="h-10 bg-slate-100 rounded-2xl w-full" />
+                        <div key={i} className="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden animate-pulse">
+                            <div className="bg-slate-50 h-48" />
+                            <div className="p-4 space-y-3">
+                                <div className="h-4 bg-slate-100 rounded w-5/6" />
+                                <div className="h-3 bg-slate-100 rounded w-1/3" />
+                                <div className="h-7 bg-slate-100 rounded w-1/2" />
+                                <div className="h-6 bg-slate-100 rounded-lg w-2/5" />
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -222,45 +229,47 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
     }
 
     return (
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-5">
             {/* Toolbar */}
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 bg-white border border-slate-200/80 rounded-2xl p-4">
                 {/* Row 1: count + sort */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex flex-col gap-0.5">
                         <p className="text-sm text-slate-500">
-                            <span className="font-semibold text-slate-800">{sortedProducts.length}</span>
+                            <span className="font-bold text-slate-900 tabular-nums">{sortedProducts.length}</span>
                             {(priceFiltered || brandFiltered) && <span className="text-slate-400"> of {products.length}</span>}
-                            {' '}deals found
+                            {' '}deals
                             {storeName !== 'All Stores' && (
                                 <> at <span className="font-semibold text-slate-800">{storeName}</span></>
                             )}
                         </p>
-                        {lastUpdated && (
-                            <p className="text-xs text-slate-400 flex items-center gap-1">
-                                <TbRefresh size={11} />{lastUpdated}
-                            </p>
-                        )}
-                        {!isLoaded && (
-                            <p className="text-xs text-violet-500 flex items-center gap-1.5">
-                                <svg className="animate-spin h-3 w-3 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                                </svg>
-                                Scanning more pages…
-                            </p>
-                        )}
+                        <div className="flex items-center gap-3">
+                            {lastUpdated && (
+                                <p className="text-[11px] text-slate-400 flex items-center gap-1">
+                                    <TbRefresh size={10} />{lastUpdated}
+                                </p>
+                            )}
+                            {!isLoaded && (
+                                <p className="text-[11px] text-violet-500 flex items-center gap-1">
+                                    <svg className="animate-spin h-2.5 w-2.5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                                    </svg>
+                                    Scanning…
+                                </p>
+                            )}
+                        </div>
                     </div>
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs font-medium text-slate-400 mr-1">Sort by</span>
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-xs font-medium text-slate-400">Sort</span>
                         {SORT_OPTIONS.map(opt => (
                             <button
                                 key={opt.key}
                                 onClick={() => setSort(opt.key)}
-                                className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-all ${
+                                className={`text-[11px] font-semibold px-2.5 py-1 rounded-md border transition-all ${
                                     sort === opt.key
-                                        ? 'bg-slate-800 text-white border-slate-800'
-                                        : 'bg-white text-slate-500 border-slate-200 hover:border-slate-400 hover:text-slate-700'
+                                        ? 'bg-slate-900 text-white border-slate-900'
+                                        : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:text-slate-700'
                                 }`}
                             >
                                 {opt.label}
@@ -270,7 +279,7 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
                 </div>
 
                 {/* Row 2: price range */}
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-2 flex-wrap border-t border-slate-100 pt-3">
                     <span className="text-xs font-medium text-slate-400">Price</span>
                     <div className="flex items-center gap-1.5">
                         <span className="text-xs text-slate-400">$</span>
@@ -280,10 +289,10 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
                             placeholder="Min"
                             value={minPrice}
                             onChange={e => setMinPrice(e.target.value)}
-                            className="w-24 text-xs font-medium px-3 py-1.5 rounded-full border border-slate-200 bg-white text-slate-700 placeholder-slate-300 focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-200 transition-all"
+                            className="w-22 text-xs font-medium px-2.5 py-1 rounded-md border border-slate-200 bg-white text-slate-700 placeholder-slate-300 focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-200 transition-all"
                         />
                     </div>
-                    <span className="text-xs text-slate-400">to</span>
+                    <span className="text-[11px] text-slate-300">—</span>
                     <div className="flex items-center gap-1.5">
                         <span className="text-xs text-slate-400">$</span>
                         <input
@@ -292,28 +301,28 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
                             placeholder="Max"
                             value={maxPrice}
                             onChange={e => setMaxPrice(e.target.value)}
-                            className="w-24 text-xs font-medium px-3 py-1.5 rounded-full border border-slate-200 bg-white text-slate-700 placeholder-slate-300 focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-200 transition-all"
+                            className="w-22 text-xs font-medium px-2.5 py-1 rounded-md border border-slate-200 bg-white text-slate-700 placeholder-slate-300 focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-200 transition-all"
                         />
                     </div>
                     {priceFiltered && (
                         <button
                             onClick={clearPriceFilter}
-                            className="inline-flex items-center gap-1 text-xs font-semibold text-slate-400 hover:text-slate-700 transition-colors"
+                            className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-400 hover:text-slate-700 transition-colors"
                         >
-                            <TbX size={12} />
+                            <TbX size={11} />
                             Clear
                         </button>
                     )}
                 </div>
 
-                {/* Row 3: brand filters — only shown when ≥2 brands are present */}
+                {/* Row 3: brand filters */}
                 {availableBrands.length >= 2 && (
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs font-medium text-slate-400">Brand</span>
+                    <div className="flex items-center gap-1.5 flex-wrap border-t border-slate-100 pt-3">
+                        <span className="text-xs font-medium text-slate-400 mr-0.5">Brand</span>
                         {activeBrands.length > 0 && (
                             <button
                                 onClick={() => setActiveBrands([])}
-                                className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full border bg-slate-800 text-white border-slate-800"
+                                className="text-[11px] font-semibold px-2.5 py-1 rounded-md border bg-slate-900 text-white border-slate-900"
                             >
                                 All
                             </button>
@@ -324,7 +333,7 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
                                 <button
                                     key={brand}
                                     onClick={() => toggleBrand(brand)}
-                                    className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-all ${
+                                    className={`text-[11px] font-semibold px-2.5 py-1 rounded-md border transition-all ${
                                         active
                                             ? 'bg-violet-600 text-white border-violet-600'
                                             : 'bg-white text-slate-500 border-slate-200 hover:border-violet-300 hover:text-violet-600'
@@ -341,13 +350,13 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
             {/* Grid */}
             {sortedProducts.length === 0 ? (
                 <div className="text-center py-16">
-                    <p className="text-slate-500 text-sm">No deals match that price range.</p>
+                    <p className="text-slate-500 text-sm">No deals match your filters.</p>
                     <button onClick={clearPriceFilter} className="mt-3 text-xs font-semibold text-violet-600 hover:text-violet-800 transition-colors">
-                        Clear filter
+                        Clear filters
                     </button>
                 </div>
             ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {sortedProducts.map(product => {
                     const sale = parseFloat(product.price.replace(/[$,]/g, ''));
                     const reg = parseFloat(product.regular_price.replace(/[$,]/g, ''));
@@ -362,11 +371,16 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
                             href={product.link}
                             target="_blank"
                             rel="noreferrer"
-                            className="bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-lg hover:border-slate-200 transition-all duration-300 flex flex-col overflow-hidden group"
+                            className="rounded-2xl border border-slate-200/80 bg-white shadow-sm hover:shadow-xl hover:border-slate-300 hover:-translate-y-0.5 transition-all duration-300 flex flex-col overflow-hidden group"
                         >
-                            {/* Image */}
-                            <div className="relative bg-slate-50 flex items-center justify-center h-52 p-5">
-                                <div className="absolute top-3 left-3">
+                            {/* Image area */}
+                            <div className="relative bg-linear-to-b from-slate-50 to-white flex items-center justify-center h-52 p-5">
+                                {pct > 0 && (
+                                    <div className="absolute top-3 right-3 bg-rose-500 text-white text-[11px] font-bold px-2 py-0.5 rounded-md shadow-sm">
+                                        -{pct}%
+                                    </div>
+                                )}
+                                <div className="absolute top-3 left-3 flex flex-col gap-1.5">
                                     <FavoriteButton product={product} variant="icon" />
                                 </div>
                                 {product.image_url ? (
@@ -374,55 +388,52 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
                                     <img
                                         src={product.image_url}
                                         alt={product.title}
-                                        className="object-contain max-h-40 max-w-full"
+                                        className="object-contain max-h-40 max-w-full drop-shadow-sm group-hover:scale-105 transition-transform duration-300"
                                         referrerPolicy="no-referrer"
                                         onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                     />
                                 ) : (
-                                    <div className="w-40 h-40 bg-slate-200 rounded-2xl" />
+                                    <div className="w-36 h-36 bg-slate-100 rounded-xl" />
                                 )}
                             </div>
 
-                            {/* Body */}
-                            <div className="flex flex-col flex-1 p-5 gap-3">
-                                <p className="text-sm font-semibold text-slate-800 leading-snug line-clamp-2 group-hover:text-violet-700 transition-colors min-h-10">
-                                    {product.title}
-                                </p>
-
-                                <div className="border-t border-slate-100" />
-
-                                {/* Pricing */}
-                                <div className="flex items-end justify-between">
-                                    <div>
-                                        <p className="text-xs text-slate-400 mb-0.5">Sale price</p>
-                                        <p className="text-2xl font-extrabold text-slate-900 leading-none">{product.price}</p>
-                                    </div>
-                                    <div className="text-right">
-                                        <p className="text-xs text-slate-400 mb-0.5">Was</p>
-                                        <p className="text-sm text-slate-400 line-through leading-none">{product.regular_price}</p>
-                                    </div>
+                            {/* Content */}
+                            <div className="flex flex-col flex-1 px-5 pb-5 pt-4 gap-3">
+                                <div>
+                                    <p className="text-[13px] font-semibold text-slate-800 leading-snug line-clamp-2 group-hover:text-violet-700 transition-colors">
+                                        {product.title}
+                                    </p>
+                                    <p className="text-[10px] text-slate-400 font-mono mt-1 tracking-wide">{product.item_code}</p>
                                 </div>
 
-                                {/* Savings row */}
-                                <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2">
-                                    <TbTag size={13} className="text-emerald-600 shrink-0" />
-                                    <span className="text-sm font-extrabold text-emerald-700">You save ${savings}</span>
-                                    <span className="ml-auto text-xs font-semibold text-emerald-500">{pct}% off</span>
+                                <div className="flex items-baseline gap-3">
+                                    <span className="text-2xl font-extrabold text-slate-900 tracking-tight">{product.price}</span>
+                                    <span className="text-sm text-slate-400 line-through">{product.regular_price}</span>
                                 </div>
 
-                                <p className="text-xs text-slate-400 font-mono tracking-wide">{product.item_code}</p>
+                                <div className="flex items-center gap-1.5 bg-emerald-50 rounded-lg px-3 py-1.5 w-fit">
+                                    <TbTag size={13} className="text-emerald-600" />
+                                    <span className="text-xs font-bold text-emerald-700">Save ${savings}</span>
+                                </div>
 
-                                {/* Availability */}
-                                <div className="flex gap-2 flex-wrap mt-auto">
-                                    <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full border ${onlineAvail ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>
-                                        <TbWorld size={12} />
-                                        {onlineAvail ? 'Online' : 'Not Online'}
+                                <div className="flex items-center gap-3 mt-auto pt-2 border-t border-slate-100">
+                                    <span className="flex items-center gap-1 text-[11px] font-medium">
+                                        <span className={`w-1.5 h-1.5 rounded-full ${onlineAvail ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                                        <TbWorld size={12} className={onlineAvail ? 'text-emerald-600' : 'text-slate-400'} />
+                                        <span className={onlineAvail ? 'text-emerald-700' : 'text-slate-400'}>
+                                            {onlineAvail ? 'Online' : 'Not Online'}
+                                        </span>
                                     </span>
-                                    <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full border ${instoreAvail ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-400 border-slate-200'}`}>
-                                        <TbBuildingStore size={12} />
-                                        {instoreAvail ? 'In-Store' : 'Not In-Store'}
+                                    <span className="flex items-center gap-1 text-[11px] font-medium">
+                                        <span className={`w-1.5 h-1.5 rounded-full ${instoreAvail ? 'bg-emerald-500' : 'bg-slate-300'}`} />
+                                        <TbBuildingStore size={12} className={instoreAvail ? 'text-emerald-600' : 'text-slate-400'} />
+                                        <span className={instoreAvail ? 'text-emerald-700' : 'text-slate-400'}>
+                                            {instoreAvail ? 'In-Store' : 'Not In-Store'}
+                                        </span>
                                     </span>
-                                    <ShareButton title={product.title} url={product.link} price={product.price} size="sm" />
+                                    <span className="ml-auto">
+                                        <ShareButton title={product.title} url={product.link} price={product.price} size="sm" />
+                                    </span>
                                 </div>
                             </div>
                         </a>

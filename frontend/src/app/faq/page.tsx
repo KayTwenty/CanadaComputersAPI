@@ -53,20 +53,20 @@ const FAQS = [
 function Item({ q, a }: { q: string; a: string }) {
     const [open, setOpen] = useState(false);
     return (
-        <div className="border border-slate-200 rounded-2xl overflow-hidden">
+        <div className={`border rounded-xl overflow-hidden transition-colors duration-200 ${open ? 'border-violet-200 bg-violet-50/30' : 'border-slate-200/80 bg-white'}`}>
             <button
                 onClick={() => setOpen(v => !v)}
-                className="w-full flex items-center justify-between gap-4 px-6 py-4 text-left bg-white hover:bg-slate-50 transition-colors"
+                className="w-full flex items-center justify-between gap-4 px-5 py-3.5 text-left hover:bg-slate-50/60 transition-colors"
             >
-                <span className="text-sm font-semibold text-slate-800">{q}</span>
+                <span className="text-[13px] font-semibold text-slate-800">{q}</span>
                 <TbChevronDown
-                    size={16}
-                    className={`shrink-0 text-slate-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+                    size={15}
+                    className={`shrink-0 transition-transform duration-200 ${open ? 'rotate-180 text-violet-500' : 'text-slate-400'}`}
                 />
             </button>
             {open && (
-                <div className="px-6 pb-5 pt-1 bg-white border-t border-slate-100">
-                    <p className="text-sm text-slate-500 leading-relaxed">{a}</p>
+                <div className="px-5 pb-4 pt-0">
+                    <p className="text-[13px] text-slate-500 leading-relaxed">{a}</p>
                 </div>
             )}
         </div>
@@ -75,43 +75,52 @@ function Item({ q, a }: { q: string; a: string }) {
 
 export default function FaqPage() {
     return (
-        <div className="max-w-3xl mx-auto w-full px-4 sm:px-6 pt-8 sm:pt-12 pb-16 flex-1">
-            <a
-                href="/"
-                className="inline-flex items-center gap-1 text-xs font-medium text-slate-400 hover:text-slate-700 mb-3 transition-colors"
-            >
-                <TbArrowLeft size={13} />
-                Back to highlights
-            </a>
-
-            <p className="text-sm font-semibold text-violet-600 mb-1 flex items-center gap-1.5">
-                <TbQuestionMark size={14} />
-                Help
-            </p>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-                Frequently asked questions
-            </h2>
-            <p className="mt-2 text-slate-500 text-sm max-w-md">
-                Everything you need to know about how CCDeals works.
-            </p>
-
-            <div className="mt-8 flex flex-col gap-3">
-                {FAQS.map((item) => (
-                    <Item key={item.q} q={item.q} a={item.a} />
-                ))}
+        <>
+            {/* Hero header */}
+            <div className="border-b border-slate-200/60 bg-linear-to-b from-violet-50/50 to-white">
+                <div className="max-w-3xl mx-auto w-full px-4 sm:px-6 pt-6 sm:pt-8 pb-6">
+                    <a
+                        href="/"
+                        className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400 hover:text-slate-700 mb-4 transition-colors"
+                    >
+                        <TbArrowLeft size={12} />
+                        Back to highlights
+                    </a>
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
+                            <TbQuestionMark size={20} className="text-violet-600" />
+                        </div>
+                        <div>
+                            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+                                Frequently Asked Questions
+                            </h1>
+                            <p className="text-xs text-slate-500 mt-0.5">
+                                Everything you need to know about how CCDeals works.
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <p className="mt-10 text-xs text-slate-400 text-center">
-                Still have a question?{' '}
-                <a
-                    href="https://antton.ca"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-violet-600 hover:text-violet-800 font-medium transition-colors"
-                >
-                    Reach out to the developer.
-                </a>
-            </p>
-        </div>
+            <div className="max-w-3xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8 flex-1">
+                <div className="flex flex-col gap-2.5">
+                    {FAQS.map((item) => (
+                        <Item key={item.q} q={item.q} a={item.a} />
+                    ))}
+                </div>
+
+                <p className="mt-10 text-xs text-slate-400 text-center">
+                    Still have a question?{' '}
+                    <a
+                        href="https://antton.ca"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-violet-600 hover:text-violet-800 font-medium transition-colors"
+                    >
+                        Reach out to the developer.
+                    </a>
+                </p>
+            </div>
+        </>
     );
 }
