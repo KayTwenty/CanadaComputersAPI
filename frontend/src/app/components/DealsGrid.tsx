@@ -31,6 +31,21 @@ const savingsAmt = (p: Product) => {
 
 const DEFAULT_BASE_URL = '/api/deals/desktops';
 
+const CATEGORY_BRANDS: Record<string, string[]> = {
+    desktops: ['ASUS', 'MSI', 'Lenovo', 'HP', 'Dell', 'Acer', 'CyberpowerPC', 'Skytech', 'iBUYPOWER', 'CLX'],
+    memory:   ['Kingston', 'Corsair', 'G.Skill', 'Crucial', 'TeamGroup', 'Patriot', 'Samsung', 'A-Data', 'PNY', 'Mushkin'],
+    cpu:      ['Intel', 'AMD'],
+    gpu:      ['ASUS', 'MSI', 'Gigabyte', 'Zotac', 'Sapphire', 'PowerColor', 'XFX', 'ASRock', 'PNY', 'EVGA'],
+};
+
+function detectBrand(title: string, knownBrands: string[]): string | null {
+    const t = title.toLowerCase();
+    for (const brand of knownBrands) {
+        if (t.includes(brand.toLowerCase())) return brand;
+    }
+    return null;
+}
+
 export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_URL, cacheKey = '__all__' }: { storeId: number | null; storeName: string; baseUrl?: string; cacheKey?: string }) {
     const lastUpdated = useLastUpdated(cacheKey);
     const [products, setProducts] = useState<Product[]>([]);
@@ -43,12 +58,15 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
     const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const [minPrice, setMinPrice] = useState('');
     const [maxPrice, setMaxPrice] = useState('');
+    const [activeBrands, setActiveBrands] = useState<string[]>([]);
+    const category = baseUrl.split('/').pop() ?? 'desktops';
 
     useEffect(() => {
         const storeKey = `${storeId}|${baseUrl}`;
         if (storeKey !== lastStoreKeyRef.current) {
             retryCountRef.current = 0;
             lastStoreKeyRef.current = storeKey;
+            setActiveBrands([]);
         }
         if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
 
@@ -108,6 +126,24 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
         };
     }, [storeId, baseUrl, fetchKey]);
 
+    const knownBrands = CATEGORY_BRANDS[category] ?? [];
+
+    const availableBrands = useMemo(() => {
+        if (knownBrands.length === 0) return [];
+        const found = new Set<string>();
+        for (const p of products) {
+            const b = detectBrand(p.title, knownBrands);
+            if (b) found.add(b);
+        }
+        // return in the same order as CATEGORY_BRANDS so chips are stable
+        return knownBrands.filter(b => found.has(b));
+    }, [products, knownBrands]);
+
+    const toggleBrand = (brand: string) =>
+        setActiveBrands(prev =>
+            prev.includes(brand) ? prev.filter(b => b !== brand) : [...prev, brand]
+        );
+
     const sortedProducts = useMemo(() => {
         const min = minPrice !== '' ? parseFloat(minPrice) : null;
         const max = maxPrice !== '' ? parseFloat(maxPrice) : null;
@@ -115,15 +151,20 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
             const p$ = price(p);
             if (min !== null && p$ < min) return false;
             if (max !== null && p$ > max) return false;
+            if (activeBrands.length > 0) {
+                const b = detectBrand(p.title, knownBrands);
+                if (!b || !activeBrands.includes(b)) return false;
+            }
             return true;
         });
         if (sort === 'price-asc') copy.sort((a, b) => price(a) - price(b));
         else if (sort === 'price-desc') copy.sort((a, b) => price(b) - price(a));
         else copy.sort((a, b) => savingsAmt(b) - savingsAmt(a));
         return copy;
-    }, [products, sort, minPrice, maxPrice]);
+    }, [products, sort, minPrice, maxPrice, activeBrands, knownBrands]);
 
     const priceFiltered = minPrice !== '' || maxPrice !== '';
+    const brandFiltered = activeBrands.length > 0;
     const clearPriceFilter = () => { setMinPrice(''); setMaxPrice(''); };
 
     const SORT_OPTIONS: { key: typeof sort; label: string }[] = [
@@ -160,7 +201,7 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                     </svg>
-                    {storeId ? `Fetching live inventory for ${storeName} — first load may take a minute…` : 'Loading deals…'}
+                    {storeId ? `Fetching live inventory for ${storeName}. First load may take a minute…` : 'Loading deals…'}
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                     {Array.from({ length: 12 }).map((_, i) => (
@@ -189,7 +230,7 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
                     <div className="flex flex-col gap-0.5">
                         <p className="text-sm text-slate-500">
                             <span className="font-semibold text-slate-800">{sortedProducts.length}</span>
-                            {priceFiltered && <span className="text-slate-400"> of {products.length}</span>}
+                            {(priceFiltered || brandFiltered) && <span className="text-slate-400"> of {products.length}</span>}
                             {' '}deals found
                             {storeName !== 'All Stores' && (
                                 <> at <span className="font-semibold text-slate-800">{storeName}</span></>
@@ -264,6 +305,37 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
                         </button>
                     )}
                 </div>
+
+                {/* Row 3: brand filters — only shown when ≥2 brands are present */}
+                {availableBrands.length >= 2 && (
+                    <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-medium text-slate-400">Brand</span>
+                        {activeBrands.length > 0 && (
+                            <button
+                                onClick={() => setActiveBrands([])}
+                                className="inline-flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full border bg-slate-800 text-white border-slate-800"
+                            >
+                                All
+                            </button>
+                        )}
+                        {availableBrands.map(brand => {
+                            const active = activeBrands.includes(brand);
+                            return (
+                                <button
+                                    key={brand}
+                                    onClick={() => toggleBrand(brand)}
+                                    className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-all ${
+                                        active
+                                            ? 'bg-violet-600 text-white border-violet-600'
+                                            : 'bg-white text-slate-500 border-slate-200 hover:border-violet-300 hover:text-violet-600'
+                                    }`}
+                                >
+                                    {brand}
+                                </button>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
 
             {/* Grid */}

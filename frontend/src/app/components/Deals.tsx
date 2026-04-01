@@ -212,7 +212,7 @@ export default function Deals({
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                     </svg>
                     {storeId
-                        ? `Fetching live inventory for ${storeName} — first load may take a minute…`
+                        ? `Fetching live inventory for ${storeName}. First load may take a minute…`
                         : 'Loading deals…'}
                 </div>
                 <div className="flex gap-5 overflow-hidden">
