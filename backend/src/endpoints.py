@@ -4,6 +4,7 @@ from services import (
     product_search,
     get_cached_desktop_deals, get_cached_memory_deals,
     get_cached_cpu_deals, get_cached_gpu_deals, get_cached_laptop_deals,
+    get_cached_motherboard_deals, get_cached_psu_deals, get_cached_ssd_deals, get_cached_hdd_deals,
     cache_status, VALID_STORE_IDS, rate_limit_check,
 )
 
@@ -68,3 +69,27 @@ class LaptopDeals(Resource):
     def get(self):
         store_id = _parse_store_id(request.args.get('pickup'))
         return _cors(jsonify(get_cached_laptop_deals(store_id=store_id)))
+
+
+class MotherboardDeals(Resource):
+    def get(self):
+        store_id = _parse_store_id(request.args.get('pickup'))
+        return _cors(jsonify(get_cached_motherboard_deals(store_id=store_id)))
+
+
+class PsuDeals(Resource):
+    def get(self):
+        store_id = _parse_store_id(request.args.get('pickup'))
+        return _cors(jsonify(get_cached_psu_deals(store_id=store_id)))
+
+
+class SsdDeals(Resource):
+    def get(self):
+        store_id = _parse_store_id(request.args.get('pickup'))
+        return _cors(jsonify(get_cached_ssd_deals(store_id=store_id)))
+
+
+class HddDeals(Resource):
+    def get(self):
+        store_id = _parse_store_id(request.args.get('pickup'))
+        return _cors(jsonify(get_cached_hdd_deals(store_id=store_id)))

@@ -26,7 +26,7 @@ export default function GpuPage() {
                                 GPU & Graphics Card Deals
                             </h1>
                             <p className="text-xs text-slate-500 mt-0.5">
-                                Every graphics card on sale at Canada Computers{storeId !== null && <> — <span className="font-semibold text-slate-700">{selectedStore.name}</span></>}
+                                Every graphics card on sale at Canada Computers{storeId !== null && <> at <span className="font-semibold text-slate-700">{selectedStore.name}</span></>}
                             </p>
                         </div>
                     </div>

@@ -54,7 +54,7 @@ export default function TermsPage() {
 
                 <Section title="3. Accuracy of Information">
                     <p className="pt-6">
-                        Prices, availability, and product details are scraped automatically every 30 minutes from publicly accessible pages and may not reflect the current state of Canada Computers' website at any given moment. CCDeals makes no warranties — express or implied — regarding the accuracy, completeness, or timeliness of any information displayed.
+                        Prices, availability, and product details are scraped automatically every 30 minutes from publicly accessible pages and may not reflect the current state of Canada Computers' website at any given moment. CCDeals makes no warranties, express or implied, regarding the accuracy, completeness, or timeliness of any information displayed.
                     </p>
                     <p>
                         Always verify pricing and availability directly on the Canada Computers website or in store before making a purchase decision. CCDeals is not responsible for any loss arising from reliance on information shown on this site.

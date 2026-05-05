@@ -17,13 +17,13 @@ export default function ShareButton({ title, url, price, size = 'md' }: Props) {
         e.preventDefault();   // don't follow the parent <a> link
         e.stopPropagation();
 
-        const shareText = `${title} — on sale for ${price}`;
+        const shareText = `${title} on sale for ${price}`;
 
         if (typeof navigator !== 'undefined' && navigator.share) {
             try {
                 await navigator.share({ title: shareText, url });
             } catch {
-                // user cancelled — do nothing
+                // user cancelled
             }
             return;
         }
@@ -34,7 +34,7 @@ export default function ShareButton({ title, url, price, size = 'md' }: Props) {
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         } catch {
-            // clipboard unavailable — silently ignore
+            // clipboard unavailable, silently ignore
         }
     }, [title, url, price]);
 

@@ -21,12 +21,20 @@ _MEMORY_CACHE_KEY = '__memory__'
 _CPU_CACHE_KEY = '__cpu__'
 _GPU_CACHE_KEY = '__gpu__'
 _LAPTOP_CACHE_KEY = '__laptops__'
+_MOTHERBOARD_CACHE_KEY = '__motherboards__'
+_PSU_CACHE_KEY = '__psu__'
+_SSD_CACHE_KEY = '__ssd__'
+_HDD_CACHE_KEY = '__hdd__'
 _CACHE_TTL = 30 * 60          # 30 minutes for all-stores background refresh
 _STORE_CACHE_TTL = 30 * 60    # 30 minutes for per-store results too
 _MEMORY_CACHE_TTL = 30 * 60   # 30 minutes for memory deals
 _CPU_CACHE_TTL = 30 * 60      # 30 minutes for CPU deals
 _GPU_CACHE_TTL = 30 * 60      # 30 minutes for GPU deals
 _LAPTOP_CACHE_TTL = 30 * 60   # 30 minutes for laptop deals
+_MOTHERBOARD_CACHE_TTL = 30 * 60  # 30 minutes for motherboard deals
+_PSU_CACHE_TTL = 30 * 60           # 30 minutes for PSU deals
+_SSD_CACHE_TTL = 30 * 60           # 30 minutes for SSD deals
+_HDD_CACHE_TTL = 30 * 60           # 30 minutes for HDD deals
 _db_lock = threading.Lock()
 
 def _db_connect():
@@ -66,8 +74,8 @@ def cache_status():
         finally:
             conn.close()
 
-    _CATEGORY_KEYS = {_MEMORY_CACHE_KEY, _CPU_CACHE_KEY, _GPU_CACHE_KEY, _LAPTOP_CACHE_KEY}
-    _CATEGORY_PREFIXES = ('mem_', 'cpu_', 'gpu_', 'lap_')
+    _CATEGORY_KEYS = {_MEMORY_CACHE_KEY, _CPU_CACHE_KEY, _GPU_CACHE_KEY, _LAPTOP_CACHE_KEY, _MOTHERBOARD_CACHE_KEY, _PSU_CACHE_KEY, _SSD_CACHE_KEY, _HDD_CACHE_KEY}
+    _CATEGORY_PREFIXES = ('mem_', 'cpu_', 'gpu_', 'lap_', 'mob_', 'psu_', 'ssd_', 'hdd_')
 
     entries = []
     for store_key, scraped_at, byte_len in rows:
@@ -88,8 +96,8 @@ def cache_status():
 
     entries.sort(key=lambda e: e['store_key'])
 
-    _CATEGORY_KEYS = {_MEMORY_CACHE_KEY, _CPU_CACHE_KEY, _GPU_CACHE_KEY, _LAPTOP_CACHE_KEY}
-    _CATEGORY_PREFIXES = ('mem_', 'cpu_', 'gpu_', 'lap_')
+    _CATEGORY_KEYS = {_MEMORY_CACHE_KEY, _CPU_CACHE_KEY, _GPU_CACHE_KEY, _LAPTOP_CACHE_KEY, _MOTHERBOARD_CACHE_KEY, _PSU_CACHE_KEY, _SSD_CACHE_KEY, _HDD_CACHE_KEY}
+    _CATEGORY_PREFIXES = ('mem_', 'cpu_', 'gpu_', 'lap_', 'mob_', 'psu_', 'ssd_', 'hdd_')
     all_stores_entry = next((e for e in entries if e['store_key'] == _ALL_STORES_KEY), None)
     category_entries  = [e for e in entries if e['store_key'] in _CATEGORY_KEYS or e['store_key'].startswith(_CATEGORY_PREFIXES)]
     store_entries     = [e for e in entries if e['store_key'] not in {_ALL_STORES_KEY, *_CATEGORY_KEYS} and not e['store_key'].startswith(_CATEGORY_PREFIXES)]
@@ -236,11 +244,15 @@ def _background_loop():
     """
     # _JOBS is evaluated at call time so all scraper functions are already defined.
     _JOBS = [
-        (_ALL_STORES_KEY,   _CACHE_TTL,        desktop_deals,  'desktops'),
-        (_MEMORY_CACHE_KEY, _MEMORY_CACHE_TTL, memory_deals,   'memory'),
-        (_CPU_CACHE_KEY,    _CPU_CACHE_TTL,     cpu_deals,      'cpu'),
-        (_GPU_CACHE_KEY,    _GPU_CACHE_TTL,     gpu_deals,      'gpu'),
-        (_LAPTOP_CACHE_KEY, _LAPTOP_CACHE_TTL,  laptop_deals,   'laptops'),
+        (_ALL_STORES_KEY,          _CACHE_TTL,             desktop_deals,     'desktops'),
+        (_MEMORY_CACHE_KEY,        _MEMORY_CACHE_TTL,      memory_deals,      'memory'),
+        (_CPU_CACHE_KEY,           _CPU_CACHE_TTL,         cpu_deals,         'cpu'),
+        (_GPU_CACHE_KEY,           _GPU_CACHE_TTL,         gpu_deals,         'gpu'),
+        (_LAPTOP_CACHE_KEY,        _LAPTOP_CACHE_TTL,      laptop_deals,      'laptops'),
+        (_MOTHERBOARD_CACHE_KEY,   _MOTHERBOARD_CACHE_TTL, motherboard_deals, 'motherboards'),
+        (_PSU_CACHE_KEY,            _PSU_CACHE_TTL,         psu_deals,         'psu'),
+        (_SSD_CACHE_KEY,            _SSD_CACHE_TTL,         ssd_deals,         'ssd'),
+        (_HDD_CACHE_KEY,            _HDD_CACHE_TTL,         hdd_deals,         'hdd'),
     ]
 
     print('[deals] Startup: warming all global caches in parallel...')
@@ -329,7 +341,7 @@ def get_cached_gpu_deals(store_id=None):
 
 MAX_PAGES = 10  # hard cap per category to avoid runaway scrapes
 
-VALID_CATEGORIES = {'desktops', 'memory', 'cpu', 'gpu', 'laptops'}
+VALID_CATEGORIES = {'desktops', 'memory', 'cpu', 'gpu', 'laptops', 'motherboards', 'psu', 'ssd', 'hdd'}
 
 # ─── Rate limiting (token bucket, no external dependency) ─────────────────────
 # Each unique IP gets its own bucket.  Buckets refill at `_RL_RATE` tokens/sec
@@ -461,7 +473,7 @@ def product_search(search_string, low, high):
     return output
 
 
-DESKTOP_ITEM_CODE_RE = re.compile(r'^RTARU', re.IGNORECASE)
+DESKTOP_ITEM_CODE_RE = re.compile(r'^RT|^DT', re.IGNORECASE)
 
 
 def desktop_deals(store_id=None):
@@ -634,6 +646,26 @@ def memory_deals(store_id=None):
     return _scrape_sale_items('https://www.canadacomputers.com/en/1009/memory', store_id)
 
 
+def motherboard_deals(store_id=None):
+    """Scrape on-sale motherboard products from Canada Computers."""
+    return _scrape_sale_items('https://www.canadacomputers.com/en/53/motherboards', store_id)
+
+
+def psu_deals(store_id=None):
+    """Scrape on-sale power supply products from Canada Computers."""
+    return _scrape_sale_items('https://www.canadacomputers.com/en/1346/power-supplies', store_id)
+
+
+def ssd_deals(store_id=None):
+    """Scrape on-sale internal SSD products from Canada Computers."""
+    return _scrape_sale_items('https://www.canadacomputers.com/en/1291/desktop-laptop-internal-ssds', store_id)
+
+
+def hdd_deals(store_id=None):
+    """Scrape on-sale desktop internal hard drive products from Canada Computers."""
+    return _scrape_sale_items('https://www.canadacomputers.com/en/895/desktop-internal-hard-drives', store_id)
+
+
 def cpu_deals(store_id=None):
     """Scrape on-sale CPU/processor products from Canada Computers."""
     return _scrape_sale_items('https://www.canadacomputers.com/en/956/cpu', store_id)
@@ -686,6 +718,90 @@ def get_cached_laptop_deals(store_id=None):
             return result
         if store_id is not None:
             global_products = _cache_get(_LAPTOP_CACHE_KEY, _LAPTOP_CACHE_TTL)
+            if global_products:
+                return {'products': global_products}
+        return result
+
+
+def get_cached_motherboard_deals(store_id=None):
+    store_key = _MOTHERBOARD_CACHE_KEY if store_id is None else f'mob_{store_id}'
+    products = _cache_get(store_key, _MOTHERBOARD_CACHE_TTL)
+    if products is not None:
+        return {'products': products}
+    lock = _get_scrape_lock(store_key)
+    with lock:
+        products = _cache_get(store_key, _MOTHERBOARD_CACHE_TTL)
+        if products is not None:
+            return {'products': products}
+        result = motherboard_deals(store_id=store_id)
+        if result['products']:
+            _cache_set(store_key, result['products'])
+            return result
+        if store_id is not None:
+            global_products = _cache_get(_MOTHERBOARD_CACHE_KEY, _MOTHERBOARD_CACHE_TTL)
+            if global_products:
+                return {'products': global_products}
+        return result
+
+
+def get_cached_psu_deals(store_id=None):
+    store_key = _PSU_CACHE_KEY if store_id is None else f'psu_{store_id}'
+    products = _cache_get(store_key, _PSU_CACHE_TTL)
+    if products is not None:
+        return {'products': products}
+    lock = _get_scrape_lock(store_key)
+    with lock:
+        products = _cache_get(store_key, _PSU_CACHE_TTL)
+        if products is not None:
+            return {'products': products}
+        result = psu_deals(store_id=store_id)
+        if result['products']:
+            _cache_set(store_key, result['products'])
+            return result
+        if store_id is not None:
+            global_products = _cache_get(_PSU_CACHE_KEY, _PSU_CACHE_TTL)
+            if global_products:
+                return {'products': global_products}
+        return result
+
+
+def get_cached_ssd_deals(store_id=None):
+    store_key = _SSD_CACHE_KEY if store_id is None else f'ssd_{store_id}'
+    products = _cache_get(store_key, _SSD_CACHE_TTL)
+    if products is not None:
+        return {'products': products}
+    lock = _get_scrape_lock(store_key)
+    with lock:
+        products = _cache_get(store_key, _SSD_CACHE_TTL)
+        if products is not None:
+            return {'products': products}
+        result = ssd_deals(store_id=store_id)
+        if result['products']:
+            _cache_set(store_key, result['products'])
+            return result
+        if store_id is not None:
+            global_products = _cache_get(_SSD_CACHE_KEY, _SSD_CACHE_TTL)
+            if global_products:
+                return {'products': global_products}
+        return result
+
+
+def get_cached_hdd_deals(store_id=None):
+    store_key = _HDD_CACHE_KEY if store_id is None else f'hdd_{store_id}'
+    products = _cache_get(store_key, _HDD_CACHE_TTL)
+    if products is not None:
+        return {'products': products}
+    lock = _get_scrape_lock(store_key)
+    with lock:
+        products = _cache_get(store_key, _HDD_CACHE_TTL)
+        if products is not None:
+            return {'products': products}
+        result = hdd_deals(store_id=store_id)
+        if result['products']:
+            _cache_set(store_key, result['products'])
+            return result
+        if store_id is not None:
+            global_products = _cache_get(_HDD_CACHE_KEY, _HDD_CACHE_TTL)
             if global_products:
                 return {'products': global_products}
         return result
@@ -935,3 +1051,19 @@ def stream_category_gen(category: str, store_id=None):
             'https://www.canadacomputers.com/en/914/graphics-cards', store_id, sk, _GPU_CACHE_TTL)
     elif category == 'laptops':
         yield from _stream_laptop_deals_gen(store_id)
+    elif category == 'motherboards':
+        sk = f'mob_{store_id}' if store_id else _MOTHERBOARD_CACHE_KEY
+        yield from _stream_sale_items_gen(
+            'https://www.canadacomputers.com/en/53/motherboards', store_id, sk, _MOTHERBOARD_CACHE_TTL)
+    elif category == 'psu':
+        sk = f'psu_{store_id}' if store_id else _PSU_CACHE_KEY
+        yield from _stream_sale_items_gen(
+            'https://www.canadacomputers.com/en/1346/power-supplies', store_id, sk, _PSU_CACHE_TTL)
+    elif category == 'ssd':
+        sk = f'ssd_{store_id}' if store_id else _SSD_CACHE_KEY
+        yield from _stream_sale_items_gen(
+            'https://www.canadacomputers.com/en/1291/desktop-laptop-internal-ssds', store_id, sk, _SSD_CACHE_TTL)
+    elif category == 'hdd':
+        sk = f'hdd_{store_id}' if store_id else _HDD_CACHE_KEY
+        yield from _stream_sale_items_gen(
+            'https://www.canadacomputers.com/en/895/desktop-internal-hard-drives', store_id, sk, _HDD_CACHE_TTL)

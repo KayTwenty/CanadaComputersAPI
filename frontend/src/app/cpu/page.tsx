@@ -26,7 +26,7 @@ export default function CpuPage() {
                                 CPU & Processor Deals
                             </h1>
                             <p className="text-xs text-slate-500 mt-0.5">
-                                Every processor on sale at Canada Computers{storeId !== null && <> — <span className="font-semibold text-slate-700">{selectedStore.name}</span></>}
+                                Every processor on sale at Canada Computers{storeId !== null && <> at <span className="font-semibold text-slate-700">{selectedStore.name}</span></>}
                             </p>
                         </div>
                     </div>

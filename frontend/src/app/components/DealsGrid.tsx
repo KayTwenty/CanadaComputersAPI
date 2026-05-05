@@ -32,11 +32,15 @@ const savingsAmt = (p: Product) => {
 const DEFAULT_BASE_URL = '/api/deals/desktops';
 
 const CATEGORY_BRANDS: Record<string, string[]> = {
-    desktops: ['ASUS', 'MSI', 'Lenovo', 'HP', 'Dell', 'Acer', 'CyberpowerPC', 'Skytech', 'iBUYPOWER', 'CLX'],
-    memory:   ['Kingston', 'Corsair', 'G.Skill', 'Crucial', 'TeamGroup', 'Patriot', 'Samsung', 'A-Data', 'PNY', 'Mushkin'],
-    cpu:      ['Intel', 'AMD'],
-    gpu:      ['ASUS', 'MSI', 'Gigabyte', 'Zotac', 'Sapphire', 'PowerColor', 'XFX', 'ASRock', 'PNY', 'EVGA'],
-    laptops:  ['ASUS', 'MSI', 'Lenovo', 'HP', 'Dell', 'Acer', 'Samsung', 'LG', 'Razer', 'Microsoft'],
+    desktops:     ['ARMOURY', 'iSmart', 'MSI', 'Lenovo', 'HP', 'Dell', 'ASUS', 'Acer', 'CyberpowerPC', 'iBUYPOWER'],
+    memory:       ['Kingston', 'Corsair', 'G.Skill', 'Crucial', 'TeamGroup', 'Patriot', 'Samsung', 'A-Data', 'PNY', 'Mushkin'],
+    cpu:          ['Intel', 'AMD'],
+    gpu:          ['ASUS', 'MSI', 'Gigabyte', 'Zotac', 'Sapphire', 'PowerColor', 'XFX', 'ASRock', 'PNY', 'EVGA'],
+    laptops:      ['ASUS', 'MSI', 'Lenovo', 'HP', 'Dell', 'Acer', 'Samsung', 'LG', 'Razer', 'Microsoft'],
+    motherboards: ['ASUS', 'MSI', 'Gigabyte', 'ASRock', 'Biostar'],
+    psu:          ['Corsair', 'EVGA', 'Seasonic', 'be quiet!', 'Thermaltake', 'ASUS', 'Cooler Master', 'Fractal', 'Antec', 'FSP'],
+    ssd:          ['Samsung', 'WD', 'Seagate', 'Crucial', 'Kingston', 'SK hynix', 'Sabrent', 'PNY', 'Lexar', 'Corsair'],
+    hdd:          ['Seagate', 'WD', 'Toshiba', 'HGST', 'Samsung'],
 };
 
 function detectBrand(title: string, knownBrands: string[]): string | null {
@@ -178,7 +182,7 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
         return (
             <div className="flex flex-col gap-6">
                 <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
-                    <span>⚠ Backend temporarily unavailable — deals will appear once the service is back.</span>
+                    <span>⚠ Backend temporarily unavailable. Deals will appear once the service is back.</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                     {Array.from({ length: 12 }).map((_, i) => (
@@ -231,10 +235,10 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
     return (
         <div className="flex flex-col gap-5">
             {/* Toolbar */}
-            <div className="flex flex-col gap-3 bg-white border border-slate-200/80 rounded-2xl p-4">
+            <div className="flex flex-col gap-2.5">
                 {/* Row 1: count + sort */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex flex-col gap-0.5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="flex items-center gap-3 flex-wrap">
                         <p className="text-sm text-slate-500">
                             <span className="font-bold text-slate-900 tabular-nums">{sortedProducts.length}</span>
                             {(priceFiltered || brandFiltered) && <span className="text-slate-400"> of {products.length}</span>}
@@ -243,24 +247,22 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
                                 <> at <span className="font-semibold text-slate-800">{storeName}</span></>
                             )}
                         </p>
-                        <div className="flex items-center gap-3">
-                            {lastUpdated && (
-                                <p className="text-[11px] text-slate-400 flex items-center gap-1">
-                                    <TbRefresh size={10} />{lastUpdated}
-                                </p>
-                            )}
-                            {!isLoaded && (
-                                <p className="text-[11px] text-violet-500 flex items-center gap-1">
-                                    <svg className="animate-spin h-2.5 w-2.5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                                    </svg>
-                                    Scanning…
-                                </p>
-                            )}
-                        </div>
+                        {lastUpdated && (
+                            <p className="text-[11px] text-slate-400 flex items-center gap-1">
+                                <TbRefresh size={10} />{lastUpdated}
+                            </p>
+                        )}
+                        {!isLoaded && (
+                            <p className="text-[11px] text-violet-500 flex items-center gap-1">
+                                <svg className="animate-spin h-2.5 w-2.5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                                </svg>
+                                Scanning…
+                            </p>
+                        )}
                     </div>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 shrink-0">
                         <span className="text-xs font-medium text-slate-400">Sort</span>
                         {SORT_OPTIONS.map(opt => (
                             <button
@@ -278,73 +280,77 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
                     </div>
                 </div>
 
-                {/* Row 2: price range */}
-                <div className="flex items-center gap-2 flex-wrap border-t border-slate-100 pt-3">
-                    <span className="text-xs font-medium text-slate-400">Price</span>
-                    <div className="flex items-center gap-1.5">
-                        <span className="text-xs text-slate-400">$</span>
-                        <input
-                            type="number"
-                            min="0"
-                            placeholder="Min"
-                            value={minPrice}
-                            onChange={e => setMinPrice(e.target.value)}
-                            className="w-22 text-xs font-medium px-2.5 py-1 rounded-md border border-slate-200 bg-white text-slate-700 placeholder-slate-300 focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-200 transition-all"
-                        />
-                    </div>
-                    <span className="text-[11px] text-slate-300">—</span>
-                    <div className="flex items-center gap-1.5">
-                        <span className="text-xs text-slate-400">$</span>
-                        <input
-                            type="number"
-                            min="0"
-                            placeholder="Max"
-                            value={maxPrice}
-                            onChange={e => setMaxPrice(e.target.value)}
-                            className="w-22 text-xs font-medium px-2.5 py-1 rounded-md border border-slate-200 bg-white text-slate-700 placeholder-slate-300 focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-200 transition-all"
-                        />
-                    </div>
-                    {priceFiltered && (
-                        <button
-                            onClick={clearPriceFilter}
-                            className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-400 hover:text-slate-700 transition-colors"
-                        >
-                            <TbX size={11} />
-                            Clear
-                        </button>
-                    )}
-                </div>
-
-                {/* Row 3: brand filters */}
-                {availableBrands.length >= 2 && (
-                    <div className="flex items-center gap-1.5 flex-wrap border-t border-slate-100 pt-3">
-                        <span className="text-xs font-medium text-slate-400 mr-0.5">Brand</span>
-                        {activeBrands.length > 0 && (
+                {/* Row 2: price + brands */}
+                <div className="flex items-center gap-x-4 gap-y-2 flex-wrap pt-2 border-t border-slate-100">
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium text-slate-400">Price</span>
+                        <div className="flex items-center gap-1.5">
+                            <span className="text-xs text-slate-400">$</span>
+                            <input
+                                type="number"
+                                min="0"
+                                placeholder="Min"
+                                value={minPrice}
+                                onChange={e => setMinPrice(e.target.value)}
+                                className="w-20 text-xs font-medium px-2.5 py-1 rounded-md border border-slate-200 bg-white text-slate-700 placeholder-slate-300 focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-200 transition-all"
+                            />
+                        </div>
+                        <span className="text-xs text-slate-300">—</span>
+                        <div className="flex items-center gap-1.5">
+                            <span className="text-xs text-slate-400">$</span>
+                            <input
+                                type="number"
+                                min="0"
+                                placeholder="Max"
+                                value={maxPrice}
+                                onChange={e => setMaxPrice(e.target.value)}
+                                className="w-20 text-xs font-medium px-2.5 py-1 rounded-md border border-slate-200 bg-white text-slate-700 placeholder-slate-300 focus:outline-none focus:border-violet-400 focus:ring-1 focus:ring-violet-200 transition-all"
+                            />
+                        </div>
+                        {priceFiltered && (
                             <button
-                                onClick={() => setActiveBrands([])}
-                                className="text-[11px] font-semibold px-2.5 py-1 rounded-md border bg-slate-900 text-white border-slate-900"
+                                onClick={clearPriceFilter}
+                                className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-400 hover:text-slate-700 transition-colors"
                             >
-                                All
+                                <TbX size={11} />
+                                Clear
                             </button>
                         )}
-                        {availableBrands.map(brand => {
-                            const active = activeBrands.includes(brand);
-                            return (
-                                <button
-                                    key={brand}
-                                    onClick={() => toggleBrand(brand)}
-                                    className={`text-[11px] font-semibold px-2.5 py-1 rounded-md border transition-all ${
-                                        active
-                                            ? 'bg-violet-600 text-white border-violet-600'
-                                            : 'bg-white text-slate-500 border-slate-200 hover:border-violet-300 hover:text-violet-600'
-                                    }`}
-                                >
-                                    {brand}
-                                </button>
-                            );
-                        })}
                     </div>
-                )}
+
+                    {availableBrands.length >= 2 && (
+                        <>
+                            <div className="hidden sm:block w-px h-4 bg-slate-200" />
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-xs font-medium text-slate-400">Brand</span>
+                                {activeBrands.length > 0 && (
+                                    <button
+                                        onClick={() => setActiveBrands([])}
+                                        className="text-[11px] font-semibold px-2.5 py-1 rounded-md border bg-slate-900 text-white border-slate-900"
+                                    >
+                                        All
+                                    </button>
+                                )}
+                                {availableBrands.map(brand => {
+                                    const active = activeBrands.includes(brand);
+                                    return (
+                                        <button
+                                            key={brand}
+                                            onClick={() => toggleBrand(brand)}
+                                            className={`text-[11px] font-semibold px-2.5 py-1 rounded-md border transition-all ${
+                                                active
+                                                    ? 'bg-violet-600 text-white border-violet-600'
+                                                    : 'bg-white text-slate-500 border-slate-200 hover:border-violet-300 hover:text-violet-600'
+                                            }`}
+                                        >
+                                            {brand}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </>
+                    )}
+                </div>
             </div>
 
             {/* Grid */}

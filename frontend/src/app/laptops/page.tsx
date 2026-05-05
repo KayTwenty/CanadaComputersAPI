@@ -26,7 +26,7 @@ export default function LaptopsPage() {
                                 Laptop Deals
                             </h1>
                             <p className="text-xs text-slate-500 mt-0.5">
-                                Windows, Business &amp; Gaming laptops on sale{storeId !== null && <> — <span className="font-semibold text-slate-700">{selectedStore.name}</span></>}
+                                Windows, Business &amp; Gaming laptops on sale{storeId !== null && <> at <span className="font-semibold text-slate-700">{selectedStore.name}</span></>}
                             </p>
                         </div>
                     </div>

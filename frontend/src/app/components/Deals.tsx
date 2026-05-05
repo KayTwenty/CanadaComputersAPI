@@ -198,7 +198,7 @@ export default function Deals({
         return (
             <div className="flex flex-col gap-4">
                 <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
-                    <span>⚠ Backend temporarily unavailable — deals will appear once the service is back.</span>
+                    <span>⚠ Backend temporarily unavailable. Deals will appear once the service is back.</span>
                 </div>
                 <div className="flex gap-4 overflow-hidden">
                     {Array.from({ length: 5 }).map((_, i) => (
@@ -325,7 +325,7 @@ export default function Deals({
                                 className="animate-card-in snap-start flex-none rounded-2xl border border-slate-200/80 bg-white shadow-sm hover:shadow-xl hover:border-slate-300 hover:-translate-y-0.5 transition-all duration-300 flex flex-col overflow-hidden group"
                                 style={{ width: cardWidth, animationDelay: `${Math.min(i * 40, 300)}ms` }}
                             >
-                                {/* ── Image area ─────────────────────────── */}
+                                {/* Image area */}
                                 <div className="relative bg-linear-to-b from-slate-50 to-white flex items-center justify-center h-52 p-5">
                                     {/* Percent-off badge */}
                                     {pct > 0 && (
@@ -351,7 +351,7 @@ export default function Deals({
                                     )}
                                 </div>
 
-                                {/* ── Content ────────────────────────────── */}
+                                {/* Content */}
                                 <div className="flex flex-col flex-1 px-5 pb-5 pt-4 gap-3">
                                     {/* Title + item code */}
                                     <div>
