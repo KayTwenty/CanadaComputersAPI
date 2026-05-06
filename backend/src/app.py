@@ -2,7 +2,7 @@ from flask import Flask, Response, request as flask_request, stream_with_context
 from flask_restful import Api
 import json
 
-from endpoints import Search, DesktopDeals, MemoryDeals, CpuDeals, GpuDeals, LaptopDeals, MotherboardDeals, PsuDeals, SsdDeals, HddDeals, CacheStatus
+from endpoints import Search, DesktopDeals, MemoryDeals, CpuDeals, GpuDeals, LaptopDeals, MotherboardDeals, PsuDeals, SsdDeals, HddDeals, DrivesDeals, CoolersDeals, CasesDeals, CacheStatus
 from services import start_deals_refresh, stream_category_gen, VALID_STORE_IDS, VALID_CATEGORIES, rate_limit_check
 
 app = Flask(__name__)
@@ -18,8 +18,10 @@ api.add_resource(MotherboardDeals, '/deals/motherboards')
 api.add_resource(PsuDeals, '/deals/psu')
 api.add_resource(SsdDeals, '/deals/ssd')
 api.add_resource(HddDeals, '/deals/hdd')
+api.add_resource(DrivesDeals, '/deals/drives')
+api.add_resource(CoolersDeals, '/deals/coolers')
+api.add_resource(CasesDeals, '/deals/cases')
 api.add_resource(CacheStatus, '/status')
-
 
 @app.route('/deals/stream')
 def deals_stream():
@@ -51,9 +53,11 @@ def deals_stream():
         except ValueError:
             pass
 
+    on_sale_only = flask_request.args.get('deals_only', 'true').lower() != 'false'
+
     def generate():
         try:
-            for batch in stream_category_gen(category, store_id):
+            for batch in stream_category_gen(category, store_id, on_sale_only=on_sale_only):
                 yield json.dumps({'batch': batch}) + '\n'
             yield json.dumps({'done': True}) + '\n'
         except Exception as e:
@@ -68,7 +72,6 @@ def deals_stream():
             'Access-Control-Allow-Origin': '*',
         },
     )
-
 
 # Start background scrape when the server process loads
 start_deals_refresh()

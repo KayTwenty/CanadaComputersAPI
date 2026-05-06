@@ -1,11 +1,11 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { StoreProvider } from "./contexts/StoreContext";
 import { FavoritesProvider } from "./contexts/FavoritesContext";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-import TopBanner from "./components/TopBanner";
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,6 +18,14 @@ const geistMono = Geist_Mono({
 });
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://ccdeals.ca";
+const DEFAULT_DESCRIPTION =
+  "Track every on-sale deal at Canada Computers. Desktops, laptops, CPUs, GPUs, memory, motherboards, drives, PSUs, coolers and cases sorted by biggest savings. Updated automatically every 30 minutes.";
+
+export const viewport: Viewport = {
+  themeColor: "#09090b",
+  width: "device-width",
+  initialScale: 1,
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -25,23 +33,50 @@ export const metadata: Metadata = {
     default: "CCDeals | Canada Computers Deals Tracker",
     template: "%s | CCDeals",
   },
-  description:
-    "Track the best on-sale deals at Canada Computers. Browse prebuilt desktops, RAM, CPUs, and GPUs sorted by biggest dollar savings. Updated automatically every 30 minutes.",
+  description: DEFAULT_DESCRIPTION,
+  applicationName: "CCDeals",
+  category: "shopping",
   keywords: [
     "Canada Computers",
     "Canada Computers deals",
     "Canada Computers sale",
+    "Canada Computers price tracker",
     "computer deals Canada",
+    "PC deals Canada",
     "desktop deals",
+    "laptop deals",
     "RAM deals",
+    "DDR5 deals",
     "CPU deals",
     "GPU deals",
+    "graphics card deals",
+    "motherboard deals",
+    "SSD deals",
+    "hard drive deals",
+    "PSU deals",
+    "PC case deals",
+    "CPU cooler deals",
     "CCDeals",
-    "PC deals Canada",
   ],
   authors: [{ name: "Anton", url: "https://antton.ca" }],
   creator: "Anton",
-  robots: { index: true, follow: true, googleBot: { index: true, follow: true } },
+  publisher: "Anton",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
@@ -49,8 +84,7 @@ export const metadata: Metadata = {
     url: SITE_URL,
     siteName: "CCDeals",
     title: "CCDeals | Canada Computers Deals Tracker",
-    description:
-      "Track the best on-sale deals at Canada Computers. Desktops, RAM, CPUs, and GPUs sorted by biggest savings.",
+    description: DEFAULT_DESCRIPTION,
     images: [
       {
         url: "/opengraph-image",
@@ -63,8 +97,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "CCDeals | Canada Computers Deals Tracker",
-    description:
-      "Track the best on-sale deals at Canada Computers. Desktops, RAM, CPUs, and GPUs sorted by biggest savings.",
+    description: DEFAULT_DESCRIPTION,
     images: ["/opengraph-image"],
   },
 };
@@ -74,9 +107,28 @@ const websiteJsonLd = {
   "@type": "WebSite",
   name: "CCDeals",
   url: SITE_URL,
-  description:
-    "Track the best on-sale deals at Canada Computers. Updated automatically every 30 minutes.",
+  description: DEFAULT_DESCRIPTION,
+  inLanguage: "en-CA",
   author: { "@type": "Person", name: "Anton", url: "https://antton.ca" },
+  potentialAction: {
+    "@type": "SearchAction",
+    target: {
+      "@type": "EntryPoint",
+      urlTemplate: `${SITE_URL}/?q={search_term_string}`,
+    },
+    "query-input": "required name=search_term_string",
+  },
+};
+
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "CCDeals",
+  url: SITE_URL,
+  logo: `${SITE_URL}/opengraph-image`,
+  description: DEFAULT_DESCRIPTION,
+  founder: { "@type": "Person", name: "Anton", url: "https://antton.ca" },
+  sameAs: ["https://antton.ca"],
 };
 
 export default function RootLayout({
@@ -90,7 +142,6 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
-        <meta name="theme-color" content="#dc2626" />
         <script
           async
           src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2407505709493368"
@@ -100,11 +151,14 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
       </head>
       <body className="min-h-full flex flex-col bg-slate-50">
         <StoreProvider>
           <FavoritesProvider>
-            <TopBanner />
             <Navbar />
             {children}
             <Footer />
@@ -114,4 +168,5 @@ export default function RootLayout({
     </html>
   );
 }
+
 

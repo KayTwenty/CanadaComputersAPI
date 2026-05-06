@@ -1,38 +1,29 @@
 import type { Metadata } from 'next';
+import { breadcrumbJsonLd, categoryMetadata, collectionPageJsonLd, jsonLdScript } from '../lib/seo';
 
-export const metadata: Metadata = {
-    title: 'CPU & Processor Deals',
-    description:
-        'Browse every CPU and processor currently on sale at Canada Computers, sorted by biggest dollar savings. Filter by your nearest store location.',
-    alternates: { canonical: '/cpu' },
-    openGraph: {
-        title: 'CPU & Processor Deals | CCDeals',
-        description:
-            'Browse every CPU and processor currently on sale at Canada Computers, sorted by biggest dollar savings.',
-        url: '/cpu',
-    },
-    twitter: {
-        title: 'CPU & Processor Deals | CCDeals',
-        description:
-            'Browse every CPU and processor currently on sale at Canada Computers, sorted by biggest dollar savings.',
-    },
-};
+const SLUG = 'cpu';
+const TITLE = 'CPU & Processor Deals';
+const DESCRIPTION =
+    'Every Intel and AMD CPU currently on sale at Canada Computers, ranked by biggest savings. Updated every 30 minutes.';
 
-const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'CollectionPage',
-    name: 'CPU & Processor Deals — CCDeals',
-    description: 'CPUs and processors currently on sale at Canada Computers.',
-    url: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://ccdeals.ca'}/cpu`,
-};
+export const metadata: Metadata = categoryMetadata({
+    slug: SLUG,
+    title: TITLE,
+    description: DESCRIPTION,
+});
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+const jsonLd = [
+    collectionPageJsonLd({ name: TITLE, description: DESCRIPTION, url: `/${SLUG}` }),
+    breadcrumbJsonLd([
+        { name: 'Home', href: '/' },
+        { name: TITLE, href: `/${SLUG}` },
+    ]),
+];
+
+export default function CpuLayout({ children }: { children: React.ReactNode }) {
     return (
         <>
-            <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-            />
+            <script type="application/ld+json" dangerouslySetInnerHTML={jsonLdScript(jsonLd)} />
             {children}
         </>
     );

@@ -197,14 +197,14 @@ export default function Deals({
     if (offline) {
         return (
             <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+                <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3">
                     <span>⚠ Backend temporarily unavailable. Deals will appear once the service is back.</span>
                 </div>
                 <div className="flex gap-4 overflow-hidden">
                     {Array.from({ length: 5 }).map((_, i) => (
-                        <div key={i} className="flex-none bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden animate-pulse" style={{ width: cardWidth }}>
-                            <div className="bg-slate-100 h-48" />
-                            <div className="p-4 space-y-3">
+                        <div key={i} className="flex-none bg-white rounded-2xl shadow-sm border border-slate-200/70 overflow-hidden animate-pulse" style={{ width: cardWidth }}>
+                            <div className="bg-slate-100 h-52" />
+                            <div className="p-5 space-y-3">
                                 <div className="h-4 bg-slate-100 rounded w-5/6" />
                                 <div className="h-4 bg-slate-100 rounded w-2/3" />
                                 <div className="h-8 bg-slate-100 rounded-lg w-1/2 mt-2" />
@@ -219,20 +219,22 @@ export default function Deals({
     if (!isLoaded && products.length === 0) {
         return (
             <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-3 text-sm text-slate-500">
-                    <svg className="animate-spin h-4 w-4 text-violet-500 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                    </svg>
-                    {storeId
-                        ? `Fetching live inventory for ${storeName}. First load may take a minute…`
-                        : 'Loading deals…'}
+                <div className="flex items-center gap-2.5 text-sm text-slate-500">
+                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-violet-100">
+                        <svg className="animate-spin h-3 w-3 text-violet-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                        </svg>
+                    </span>
+                    <span>{storeId
+                        ? <>Fetching live inventory for <span className="font-semibold text-slate-700">{storeName}</span>. First load may take a minute…</>
+                        : 'Loading deals…'}</span>
                 </div>
                 <div className="flex gap-4 overflow-hidden">
                     {Array.from({ length: 5 }).map((_, i) => (
-                        <div key={i} className="flex-none bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden animate-pulse" style={{ width: cardWidth }}>
-                            <div className="bg-slate-100 h-48" />
-                            <div className="p-4 space-y-3">
+                        <div key={i} className="flex-none bg-white rounded-2xl shadow-sm border border-slate-200/70 overflow-hidden animate-pulse" style={{ width: cardWidth }}>
+                            <div className="bg-slate-100 h-52" />
+                            <div className="p-5 space-y-3">
                                 <div className="h-4 bg-slate-100 rounded w-5/6" />
                                 <div className="h-4 bg-slate-100 rounded w-2/3" />
                                 <div className="h-8 bg-slate-100 rounded-lg w-1/2 mt-2" />
@@ -245,46 +247,50 @@ export default function Deals({
     }
 
     if (products.length === 0) {
-        return <p className="text-slate-500 p-4">Deals are being fetched in the background. Refresh in a moment.</p>;
+        return (
+            <div className="flex items-center justify-center gap-3 py-12 px-6 bg-white border border-slate-200/70 rounded-2xl text-sm text-slate-500">
+                <span className="text-xl">⏳</span>
+                <span>Deals are being fetched in the background. Refresh in a moment.</span>
+            </div>
+        );
     }
 
     const SORT_OPTIONS: { key: typeof sort; label: string }[] = [
         { key: 'savings',    label: 'Best Savings' },
-        { key: 'price-asc',  label: 'Price: Low → High' },
-        { key: 'price-desc', label: 'Price: High → Low' },
+        { key: 'price-asc',  label: 'Price ↑' },
+        { key: 'price-desc', label: 'Price ↓' },
     ];
 
     return (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4">
             {/* Sort + count bar */}
             <div className="flex items-center justify-between flex-wrap gap-2">
-                <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-medium text-slate-400">Sort</span>
+                <div className="flex items-center gap-1">
                     {SORT_OPTIONS.map(opt => (
                         <button
                             key={opt.key}
                             onClick={() => setSort(opt.key)}
-                            className={`text-[11px] font-semibold px-2.5 py-1 rounded-md border transition-all ${
+                            className={`text-[11px] font-bold px-2.5 py-1 rounded-full transition-all whitespace-nowrap ${
                                 sort === opt.key
-                                    ? 'bg-slate-900 text-white border-slate-900'
-                                    : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:text-slate-700'
+                                    ? 'bg-zinc-950 text-white shadow-sm shadow-zinc-900/20'
+                                    : 'bg-white text-slate-500 border border-slate-200 hover:border-slate-300 hover:text-slate-800'
                             }`}
                         >
                             {opt.label}
                         </button>
                     ))}
                 </div>
-                <div className="flex items-center gap-2 text-xs text-slate-400">
+                <div className="flex items-center gap-2 text-[11px] text-slate-400">
                     {!isLoaded && (
-                        <span className="inline-flex items-center gap-1">
-                            <svg className="animate-spin h-3 w-3 text-violet-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <span className="inline-flex items-center gap-1 text-violet-500">
+                            <svg className="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                             </svg>
                             Scanning…
                         </span>
                     )}
-                    <span className="tabular-nums font-medium">{activeIndex + 1} / {sortedProducts.length}</span>
+                    <span className="tabular-nums font-semibold text-slate-500">{activeIndex + 1} / {sortedProducts.length}</span>
                 </div>
             </div>
 
@@ -294,7 +300,7 @@ export default function Deals({
                 <button
                     onClick={prev}
                     disabled={activeIndex === 0}
-                    className="hidden sm:flex absolute -left-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 items-center justify-center bg-white/95 backdrop-blur border border-slate-200 shadow-lg rounded-xl text-slate-600 hover:text-slate-900 hover:border-slate-300 transition-all disabled:opacity-0 disabled:pointer-events-none opacity-0 group-hover/carousel:opacity-100"
+                    className="hidden sm:flex absolute -left-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center bg-zinc-950 border border-zinc-800 shadow-xl shadow-black/20 rounded-full text-white hover:bg-violet-600 hover:border-violet-500 hover:shadow-violet-500/30 hover:scale-105 active:scale-100 transition-all disabled:opacity-0 disabled:pointer-events-none opacity-0 group-hover/carousel:opacity-100"
                     aria-label="Previous"
                 >
                     <TbChevronLeft size={18} />
@@ -305,8 +311,8 @@ export default function Deals({
                     onScroll={handleScroll}
                     onMouseEnter={() => { isPausedRef.current = true; }}
                     onMouseLeave={() => { isPausedRef.current = false; }}
-                    className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth"
-                    style={{ gap: GAP, scrollbarWidth: 'none', paddingBottom: 4 }}
+                    className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar"
+                    style={{ gap: GAP, paddingBottom: 4 }}
                 >
                     {sortedProducts.map((product, i) => {
                         const sale = parseFloat(product.price.replace(/[$,]/g, ''));
@@ -322,19 +328,19 @@ export default function Deals({
                                 href={product.link}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="animate-card-in snap-start flex-none rounded-2xl border border-slate-200/80 bg-white shadow-sm hover:shadow-xl hover:border-slate-300 hover:-translate-y-0.5 transition-all duration-300 flex flex-col overflow-hidden group"
+                                className="animate-card-in snap-start flex-none rounded-2xl border border-slate-200/70 bg-white shadow-sm hover:shadow-xl hover:shadow-zinc-900/5 hover:border-violet-300/60 hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden group"
                                 style={{ width: cardWidth, animationDelay: `${Math.min(i * 40, 300)}ms` }}
                             >
                                 {/* Image area */}
-                                <div className="relative bg-linear-to-b from-slate-50 to-white flex items-center justify-center h-52 p-5">
+                                <div className="relative bg-linear-to-b from-slate-50 to-white flex items-center justify-center h-52 p-5 overflow-hidden">
                                     {/* Percent-off badge */}
                                     {pct > 0 && (
-                                        <div className="absolute top-3 right-3 bg-rose-500 text-white text-[11px] font-bold px-2 py-0.5 rounded-md shadow-sm">
-                                            -{pct}%
+                                        <div className="absolute top-3 right-3 z-10 inline-flex items-center bg-linear-to-br from-rose-500 to-rose-600 text-white text-[11px] font-extrabold px-2 py-0.5 rounded-md shadow-md shadow-rose-500/30">
+                                            −{pct}%
                                         </div>
                                     )}
                                     {/* Actions */}
-                                    <div className="absolute top-3 left-3 flex flex-col gap-1.5">
+                                    <div className="absolute top-3 left-3 z-10 flex flex-col gap-1.5">
                                         <FavoriteButton product={product} variant="icon" />
                                     </div>
                                     {product.image_url ? (
@@ -342,7 +348,7 @@ export default function Deals({
                                         <img
                                             src={product.image_url}
                                             alt={product.title}
-                                            className="object-contain max-h-40 max-w-full drop-shadow-sm group-hover:scale-105 transition-transform duration-300"
+                                            className="object-contain max-h-40 max-w-full drop-shadow-sm group-hover:scale-110 transition-transform duration-500 ease-out"
                                             referrerPolicy="no-referrer"
                                             onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                         />
@@ -368,26 +374,24 @@ export default function Deals({
                                     </div>
 
                                     {/* Savings chip */}
-                                    <div className="flex items-center gap-1.5 bg-emerald-50 rounded-lg px-3 py-1.5 w-fit">
-                                        <TbTag size={13} className="text-emerald-600" />
-                                        <span className="text-xs font-bold text-emerald-700">Save ${savingsAmt}</span>
+                                    <div className="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-100 rounded-lg px-2.5 py-1 w-fit">
+                                        <TbTag size={12} className="text-emerald-600" />
+                                        <span className="text-[11px] font-bold text-emerald-700">Save ${savingsAmt}</span>
                                     </div>
 
                                     {/* Availability row */}
-                                    <div className="flex items-center gap-3 mt-auto pt-2 border-t border-slate-100">
-                                        <span className="flex items-center gap-1 text-[11px] font-medium">
-                                            <span className={`w-1.5 h-1.5 rounded-full ${onlineAvail ? 'bg-emerald-500' : 'bg-slate-300'}`} />
-                                            <TbWorld size={12} className={onlineAvail ? 'text-emerald-600' : 'text-slate-400'} />
-                                            <span className={onlineAvail ? 'text-emerald-700' : 'text-slate-400'}>
-                                                {onlineAvail ? 'Online' : 'Not Online'}
-                                            </span>
+                                    <div className="flex items-center gap-2 mt-auto pt-3 border-t border-slate-100">
+                                        <span className={`inline-flex items-center gap-1 text-[10px] font-semibold rounded-md px-1.5 py-0.5 ${
+                                            onlineAvail ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-50 text-slate-400'
+                                        }`}>
+                                            <TbWorld size={11} />
+                                            {onlineAvail ? 'Online' : '—'}
                                         </span>
-                                        <span className="flex items-center gap-1 text-[11px] font-medium">
-                                            <span className={`w-1.5 h-1.5 rounded-full ${instoreAvail ? 'bg-emerald-500' : 'bg-slate-300'}`} />
-                                            <TbBuildingStore size={12} className={instoreAvail ? 'text-emerald-600' : 'text-slate-400'} />
-                                            <span className={instoreAvail ? 'text-emerald-700' : 'text-slate-400'}>
-                                                {instoreAvail ? 'In-Store' : 'Not In-Store'}
-                                            </span>
+                                        <span className={`inline-flex items-center gap-1 text-[10px] font-semibold rounded-md px-1.5 py-0.5 ${
+                                            instoreAvail ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-50 text-slate-400'
+                                        }`}>
+                                            <TbBuildingStore size={11} />
+                                            {instoreAvail ? 'In-Store' : '—'}
                                         </span>
                                         <span className="ml-auto">
                                             <ShareButton title={product.title} url={product.link} price={product.price} size="sm" />
@@ -402,7 +406,7 @@ export default function Deals({
                 <button
                     onClick={next}
                     disabled={activeIndex === products.length - 1}
-                    className="hidden sm:flex absolute -right-3 top-1/2 -translate-y-1/2 z-10 w-9 h-9 items-center justify-center bg-white/95 backdrop-blur border border-slate-200 shadow-lg rounded-xl text-slate-600 hover:text-slate-900 hover:border-slate-300 transition-all disabled:opacity-0 disabled:pointer-events-none opacity-0 group-hover/carousel:opacity-100"
+                    className="hidden sm:flex absolute -right-3 top-1/2 -translate-y-1/2 z-10 w-10 h-10 items-center justify-center bg-zinc-950 border border-zinc-800 shadow-xl shadow-black/20 rounded-full text-white hover:bg-violet-600 hover:border-violet-500 hover:shadow-violet-500/30 hover:scale-105 active:scale-100 transition-all disabled:opacity-0 disabled:pointer-events-none opacity-0 group-hover/carousel:opacity-100"
                     aria-label="Next"
                 >
                     <TbChevronRight size={18} />
@@ -419,8 +423,8 @@ export default function Deals({
                             aria-label={`Go to product ${i + 1}`}
                             className={`rounded-full transition-all duration-300 ${
                                 i === activeIndex
-                                    ? 'bg-violet-600 w-5 h-1.5'
-                                    : 'bg-slate-200 hover:bg-slate-300 w-1.5 h-1.5'
+                                    ? 'bg-violet-600 w-6 h-1.5'
+                                    : 'bg-slate-200 hover:bg-slate-400 w-1.5 h-1.5'
                             }`}
                         />
                     ))}

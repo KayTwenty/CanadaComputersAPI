@@ -1,38 +1,29 @@
 import type { Metadata } from 'next';
+import { breadcrumbJsonLd, categoryMetadata, collectionPageJsonLd, jsonLdScript } from '../lib/seo';
 
-export const metadata: Metadata = {
-    title: 'GPU & Graphics Card Deals',
-    description:
-        'Browse every graphics card currently on sale at Canada Computers, sorted by biggest dollar savings. Filter by your nearest store location.',
-    alternates: { canonical: '/gpu' },
-    openGraph: {
-        title: 'GPU & Graphics Card Deals | CCDeals',
-        description:
-            'Browse every graphics card currently on sale at Canada Computers, sorted by biggest dollar savings.',
-        url: '/gpu',
-    },
-    twitter: {
-        title: 'GPU & Graphics Card Deals | CCDeals',
-        description:
-            'Browse every graphics card currently on sale at Canada Computers, sorted by biggest dollar savings.',
-    },
-};
+const SLUG = 'gpu';
+const TITLE = 'GPU & Graphics Card Deals';
+const DESCRIPTION =
+    'Every graphics card on sale at Canada Computers from NVIDIA, AMD and Intel partners, sorted by biggest savings. Updated every 30 minutes.';
 
-const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'CollectionPage',
-    name: 'GPU & Graphics Card Deals — CCDeals',
-    description: 'Graphics cards currently on sale at Canada Computers.',
-    url: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://ccdeals.ca'}/gpu`,
-};
+export const metadata: Metadata = categoryMetadata({
+    slug: SLUG,
+    title: TITLE,
+    description: DESCRIPTION,
+});
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+const jsonLd = [
+    collectionPageJsonLd({ name: TITLE, description: DESCRIPTION, url: `/${SLUG}` }),
+    breadcrumbJsonLd([
+        { name: 'Home', href: '/' },
+        { name: TITLE, href: `/${SLUG}` },
+    ]),
+];
+
+export default function GpuLayout({ children }: { children: React.ReactNode }) {
     return (
         <>
-            <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-            />
+            <script type="application/ld+json" dangerouslySetInnerHTML={jsonLdScript(jsonLd)} />
             {children}
         </>
     );

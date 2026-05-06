@@ -9,9 +9,11 @@ export async function GET(request: NextRequest) {
     const params = request.nextUrl.searchParams;
     const category = params.get('category') ?? 'desktops';
     const pickup = params.get('pickup');
+    const dealsOnly = params.get('deals_only');
 
     let url = `${FLASK}/deals/stream?category=${encodeURIComponent(category)}`;
     if (pickup) url += `&pickup=${encodeURIComponent(pickup)}`;
+    if (dealsOnly !== null) url += `&deals_only=${encodeURIComponent(dealsOnly)}`;
 
     try {
         // No timeout — let the Flask stream complete naturally.

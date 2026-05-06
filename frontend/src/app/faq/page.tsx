@@ -1,72 +1,38 @@
 'use client';
 
 import { useState } from 'react';
-import { TbArrowLeft, TbQuestionMark, TbChevronDown } from 'react-icons/tb';
+import { TbArrowLeft, TbQuestionMark, TbChevronDown, TbSparkles, TbShieldLock, TbRefresh } from 'react-icons/tb';
+import { FAQS } from '../lib/faqs';
 
-const FAQS = [
-    {
-        q: 'What is CCDeals?',
-        a: 'CCDeals is an unofficial deal tracker for Canada Computers. It automatically scrapes sale prices across desktops, memory, CPUs, and GPUs every 30 minutes so you can quickly spot the best savings without browsing the full catalogue.',
-    },
-    {
-        q: 'Is this affiliated with Canada Computers?',
-        a: 'No. CCDeals is an independent, community-built tool and has no affiliation with Canada Computers & Electronics Ltd. All product data is publicly available on their website.',
-    },
-    {
-        q: 'How often are prices updated?',
-        a: 'Prices and availability are refreshed every 30 minutes automatically. You can see exactly how long ago each category was last updated on both the home page and category pages.',
-    },
-    {
-        q: 'Does this show member pricing?',
-        a: 'No. CCDeals shows publicly listed sale prices only. It does not have access to your Canada Computers account and will not display member-exclusive pricing.',
-    },
-    {
-        q: 'How does the store filter work?',
-        a: 'Click the store picker in the top navigation bar and allow location access (or pick a store manually) to filter deals by in-store availability at your nearest Canada Computers location. Your location is never sent to any server. It stays entirely in your browser.',
-    },
-    {
-        q: 'Does CCDeals collect any of my data?',
-        a: 'No. There is no user account system, no analytics, and no tracking. Your location, favourites, and browsing history never leave your device. Favourites are saved locally in your browser\'s localStorage.',
-    },
-    {
-        q: 'What does the "You save" amount mean?',
-        a: 'It reflects the difference between the regular (non-sale) price listed on Canada Computers\' website and the current sale price at the time of the last updated price.',
-    },
-    {
-        q: 'Can I save deals to come back to later?',
-        a: 'Yes! Tap the heart icon on any product card to save it to your Favourites. Saved items are stored locally in your browser and are accessible from the Favourites page in the navigation bar.',
-    },
-    {
-        q: 'How do I share a deal?',
-        a: 'Each card has a share button. On mobile it uses the native share sheet; on desktop it copies the product link to your clipboard.',
-    },
-    {
-        q: 'Why is a product showing as unavailable?',
-        a: 'Availability reflects the status at the time of the last 30-minute update. Stock can change faster than that. Always check the product page on Canada Computers directly before making a trip.',
-    },
-    {
-        q: 'How do I request a feature?',
-        a: 'At the current time, there is no way to submit feature requests.',
-    }
-];
-
-function Item({ q, a }: { q: string; a: string }) {
+function Item({ q, a, idx }: { q: string; a: string; idx: number }) {
     const [open, setOpen] = useState(false);
     return (
-        <div className={`border rounded-xl overflow-hidden transition-colors duration-200 ${open ? 'border-violet-200 bg-violet-50/30' : 'border-slate-200/80 bg-white'}`}>
+        <div className={`group rounded-2xl overflow-hidden transition-all duration-200 animate-card-in ${
+            open
+                ? 'bg-white border border-violet-200 shadow-lg shadow-violet-500/5'
+                : 'bg-white border border-slate-200/70 shadow-sm hover:border-slate-300 hover:shadow-md'
+        }`} style={{ animationDelay: `${Math.min(idx * 30, 240)}ms` }}>
             <button
                 onClick={() => setOpen(v => !v)}
-                className="w-full flex items-center justify-between gap-4 px-5 py-3.5 text-left hover:bg-slate-50/60 transition-colors"
+                className="w-full flex items-center gap-4 px-5 py-4 text-left"
             >
-                <span className="text-[13px] font-semibold text-slate-800">{q}</span>
-                <TbChevronDown
-                    size={15}
-                    className={`shrink-0 transition-transform duration-200 ${open ? 'rotate-180 text-violet-500' : 'text-slate-400'}`}
-                />
+                <span className={`shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-[11px] font-extrabold tabular-nums transition-colors ${
+                    open ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-400 group-hover:bg-slate-200 group-hover:text-slate-600'
+                }`}>
+                    {String(idx + 1).padStart(2, '0')}
+                </span>
+                <span className={`flex-1 text-[14px] font-bold tracking-tight transition-colors ${open ? 'text-slate-900' : 'text-slate-700 group-hover:text-slate-900'}`}>
+                    {q}
+                </span>
+                <span className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center transition-all duration-200 ${
+                    open ? 'bg-violet-100 text-violet-600 rotate-180' : 'bg-slate-50 text-slate-400 group-hover:bg-slate-100'
+                }`}>
+                    <TbChevronDown size={14} />
+                </span>
             </button>
             {open && (
-                <div className="px-5 pb-4 pt-0">
-                    <p className="text-[13px] text-slate-500 leading-relaxed">{a}</p>
+                <div className="px-5 pb-5 pt-0 pl-16 animate-fade-up">
+                    <p className="text-[13px] text-slate-600 leading-relaxed">{a}</p>
                 </div>
             )}
         </div>
@@ -76,50 +42,78 @@ function Item({ q, a }: { q: string; a: string }) {
 export default function FaqPage() {
     return (
         <>
-            {/* Hero header */}
-            <div className="border-b border-slate-200/60 bg-linear-to-b from-violet-50/50 to-white">
-                <div className="max-w-3xl mx-auto w-full px-4 sm:px-6 pt-6 sm:pt-8 pb-6">
+            {/* Dark hero */}
+            <section className="relative overflow-hidden bg-zinc-950 text-white">
+                <div className="absolute inset-0 bg-grid pointer-events-none" />
+                <div className="absolute inset-0 bg-spotlight pointer-events-none" />
+
+                <div className="relative max-w-3xl mx-auto px-4 sm:px-6 pt-8 pb-10 sm:pt-10 sm:pb-12">
                     <a
                         href="/"
-                        className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400 hover:text-slate-700 mb-4 transition-colors"
+                        className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-zinc-500 hover:text-white mb-6 transition-colors group"
                     >
-                        <TbArrowLeft size={12} />
-                        Back to highlights
+                        <TbArrowLeft size={12} className="transition-transform group-hover:-translate-x-0.5" />
+                        Back to all deals
                     </a>
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
-                            <TbQuestionMark size={20} className="text-violet-600" />
-                        </div>
-                        <div>
-                            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+
+                    <div className="flex items-start gap-4">
+                        <span className="shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-linear-to-br from-violet-500/20 to-fuchsia-500/10 ring-1 ring-violet-500/30 flex items-center justify-center text-violet-300 shadow-lg shadow-violet-500/10">
+                            <TbQuestionMark size={26} />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight leading-tight animate-fade-up">
                                 Frequently Asked Questions
                             </h1>
-                            <p className="text-xs text-slate-500 mt-0.5">
-                                Everything you need to know about how CCDeals works.
+                            <p className="mt-2 text-zinc-400 text-sm sm:text-base max-w-xl animate-fade-up" style={{ animationDelay: '40ms' }}>
+                                Everything you need to know about how CCDeals works — privacy, pricing, refresh cadence and more.
                             </p>
+
+                            {/* Meta strip */}
+                            <div className="mt-4 flex items-center gap-2 flex-wrap text-[11px] animate-fade-up" style={{ animationDelay: '80ms' }}>
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-violet-500/10 border border-violet-500/30 text-violet-200">
+                                    <TbSparkles size={12} className="text-violet-400" />
+                                    <span className="font-semibold">{FAQS.length} questions answered</span>
+                                </span>
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300">
+                                    <TbShieldLock size={12} />
+                                    <span className="font-semibold">Privacy-first</span>
+                                </span>
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-800/60 border border-zinc-700/50 text-zinc-400">
+                                    <TbRefresh size={12} />
+                                    <span>Updates every 30 min</span>
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </section>
 
-            <div className="max-w-3xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8 flex-1">
-                <div className="flex flex-col gap-2.5">
-                    {FAQS.map((item) => (
-                        <Item key={item.q} q={item.q} a={item.a} />
-                    ))}
+            <div className="bg-slate-50 flex-1">
+                <div className="max-w-3xl mx-auto w-full px-4 sm:px-6 py-8 sm:py-10">
+                    <div className="flex flex-col gap-3">
+                        {FAQS.map((item, idx) => (
+                            <Item key={item.q} q={item.q} a={item.a} idx={idx} />
+                        ))}
+                    </div>
+
+                    {/* Contact CTA */}
+                    <div className="mt-10 relative overflow-hidden rounded-2xl bg-zinc-950 text-white px-6 py-7 text-center">
+                        <div className="absolute inset-0 bg-grid pointer-events-none opacity-50" />
+                        <div className="absolute inset-0 bg-spotlight pointer-events-none" />
+                        <div className="relative">
+                            <p className="text-sm font-bold text-white">Still have a question?</p>
+                            <p className="text-xs text-zinc-400 mt-1 mb-4">Reach out and the developer will get back to you.</p>
+                            <a
+                                href="https://antton.ca"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1.5 text-[11px] font-bold text-white bg-linear-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 px-4 py-2 rounded-full shadow-lg shadow-violet-500/30 hover:shadow-violet-500/50 hover:scale-[1.02] transition-all"
+                            >
+                                Contact the developer
+                            </a>
+                        </div>
+                    </div>
                 </div>
-
-                <p className="mt-10 text-xs text-slate-400 text-center">
-                    Still have a question?{' '}
-                    <a
-                        href="https://antton.ca"
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-violet-600 hover:text-violet-800 font-medium transition-colors"
-                    >
-                        Reach out to the developer.
-                    </a>
-                </p>
             </div>
         </>
     );

@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
 import { breadcrumbJsonLd, categoryMetadata, collectionPageJsonLd, jsonLdScript } from '../lib/seo';
 
-const SLUG = 'memory';
-const TITLE = 'RAM & Memory Deals';
+const SLUG = 'cases';
+const TITLE = 'PC Case Deals';
 const DESCRIPTION =
-    'DDR4, DDR5 and laptop SO-DIMM memory kits on sale at Canada Computers, sorted by biggest savings. Updated every 30 minutes.';
+    'Mid Tower, Full Tower and ITX/mATX cases on sale at Canada Computers, sorted by biggest savings. Updated every 30 minutes.';
 
 export const metadata: Metadata = categoryMetadata({
     slug: SLUG,
@@ -20,7 +20,7 @@ const jsonLd = [
     ]),
 ];
 
-export default function MemoryLayout({ children }: { children: React.ReactNode }) {
+export default function CasesLayout({ children }: { children: React.ReactNode }) {
     return (
         <>
             <script type="application/ld+json" dangerouslySetInnerHTML={jsonLdScript(jsonLd)} />

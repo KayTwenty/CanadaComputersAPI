@@ -2,39 +2,37 @@ import type { MetadataRoute } from 'next';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://ccdeals.ca';
 
+const CATEGORIES = [
+    'desktops',
+    'laptops',
+    'cpu',
+    'gpu',
+    'memory',
+    'motherboards',
+    'drives',
+    'psu',
+    'coolers',
+    'cases',
+] as const;
+
 export default function sitemap(): MetadataRoute.Sitemap {
     const now = new Date();
-    return [
-        {
-            url: SITE_URL,
-            lastModified: now,
-            changeFrequency: 'hourly',
-            priority: 1,
-        },
-        {
-            url: `${SITE_URL}/desktops`,
-            lastModified: now,
-            changeFrequency: 'hourly',
-            priority: 0.9,
-        },
-        {
-            url: `${SITE_URL}/memory`,
-            lastModified: now,
-            changeFrequency: 'hourly',
-            priority: 0.9,
-        },
-        {
-            url: `${SITE_URL}/cpu`,
-            lastModified: now,
-            changeFrequency: 'hourly',
-            priority: 0.9,
-        },
-        {
-            url: `${SITE_URL}/gpu`,
-            lastModified: now,
-            changeFrequency: 'hourly',
-            priority: 0.9,
-        },
+
+    const home: MetadataRoute.Sitemap[number] = {
+        url: SITE_URL,
+        lastModified: now,
+        changeFrequency: 'hourly',
+        priority: 1,
+    };
+
+    const categories: MetadataRoute.Sitemap = CATEGORIES.map((slug) => ({
+        url: `${SITE_URL}/${slug}`,
+        lastModified: now,
+        changeFrequency: 'hourly',
+        priority: 0.9,
+    }));
+
+    const utility: MetadataRoute.Sitemap = [
         {
             url: `${SITE_URL}/favorites`,
             lastModified: now,
@@ -60,4 +58,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
             priority: 0.3,
         },
     ];
+
+    return [home, ...categories, ...utility];
 }

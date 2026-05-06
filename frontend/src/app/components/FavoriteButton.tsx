@@ -26,16 +26,17 @@ export default function FavoriteButton({
         return (
             <button
                 onClick={handleClick}
-                aria-label={fav ? 'Remove from favorites' : 'Save to favorites'}
-                className={`flex items-center justify-center w-8 h-8 rounded-full shadow-sm border transition-all ${
+                aria-label={fav ? 'Remove from favourites' : 'Save to favourites'}
+                className={`group/fav flex items-center justify-center w-8 h-8 rounded-full backdrop-blur-md transition-all duration-200 active:scale-90 ${
                     fav
-                        ? 'bg-rose-50 border-rose-200 text-rose-500 hover:bg-rose-100'
-                        : 'bg-white/90 border-slate-200 text-slate-400 hover:text-slate-600 hover:bg-white'
+                        ? 'bg-linear-to-br from-rose-500 to-rose-600 text-white shadow-md shadow-rose-500/30 hover:shadow-rose-500/50 hover:scale-105'
+                        : 'bg-white/90 border border-slate-200/80 text-slate-400 hover:text-rose-500 hover:border-rose-200 hover:bg-white hover:scale-105 shadow-sm'
                 }`}
             >
                 <TbHeart
                     size={15}
                     style={fav ? { fill: 'currentColor' } : undefined}
+                    className={fav ? 'drop-shadow-sm' : 'transition-transform group-hover/fav:scale-110'}
                 />
             </button>
         );
@@ -44,11 +45,11 @@ export default function FavoriteButton({
     return (
         <button
             onClick={handleClick}
-            aria-label={fav ? 'Remove from favorites' : 'Save to favorites'}
-            className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full border transition-all ${
+            aria-label={fav ? 'Remove from favourites' : 'Save to favourites'}
+            className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full border transition-all ${
                 fav
-                    ? 'bg-rose-50 text-rose-500 border-rose-200 hover:bg-rose-100'
-                    : 'bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100 hover:text-slate-600'
+                    ? 'bg-linear-to-br from-rose-500 to-rose-600 text-white border-rose-500 shadow-sm shadow-rose-500/30'
+                    : 'bg-white text-slate-400 border-slate-200 hover:bg-rose-50 hover:text-rose-500 hover:border-rose-200'
             }`}
         >
             <TbHeart

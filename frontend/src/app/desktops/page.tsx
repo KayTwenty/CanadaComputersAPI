@@ -1,39 +1,26 @@
 'use client';
 
-import { TbArrowLeft, TbDeviceDesktop } from 'react-icons/tb';
+import { TbDeviceDesktop } from 'react-icons/tb';
 import { useStore } from '../contexts/StoreContext';
 import DealsGrid from '../components/DealsGrid';
+import CategoryHero from '../components/CategoryHero';
 
 export default function DesktopsPage() {
     const { storeId, selectedStore } = useStore();
     return (
         <>
-            <div className="border-b border-slate-200/60 bg-linear-to-b from-violet-50/50 to-white">
-                <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 pt-6 sm:pt-8 pb-6">
-                    <a
-                        href="/"
-                        className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-400 hover:text-slate-700 mb-4 transition-colors"
-                    >
-                        <TbArrowLeft size={12} />
-                        Back to highlights
-                    </a>
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-violet-100 flex items-center justify-center">
-                            <TbDeviceDesktop size={20} className="text-violet-600" />
-                        </div>
-                        <div>
-                            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-                                Desktop Deals
-                            </h1>
-                            <p className="text-xs text-slate-500 mt-0.5">
-                                Every prebuilt desktop on sale at Canada Computers{storeId !== null && <> at <span className="font-semibold text-slate-700">{selectedStore.name}</span></>}
-                            </p>
-                        </div>
-                    </div>
+            <CategoryHero
+                title="Desktop Deals"
+                description="Every prebuilt desktop on sale at Canada Computers, sorted by biggest savings."
+                Icon={TbDeviceDesktop}
+                storeName={selectedStore.name}
+                showStore={storeId !== null}
+                cacheKey="__all__"
+            />
+            <div className="bg-slate-50 flex-1">
+                <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8">
+                    <DealsGrid storeId={storeId} storeName={selectedStore.name} cacheKey="__all__" defaultDealsOnly={false} />
                 </div>
-            </div>
-            <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8 flex-1">
-                <DealsGrid storeId={storeId} storeName={selectedStore.name} cacheKey="__all__" />
             </div>
         </>
     );
