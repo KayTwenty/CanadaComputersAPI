@@ -2,7 +2,7 @@ from flask import Flask, Response, request as flask_request, stream_with_context
 from flask_restful import Api
 import json
 
-from endpoints import Search, DesktopDeals, MemoryDeals, CpuDeals, GpuDeals, LaptopDeals, MotherboardDeals, PsuDeals, SsdDeals, HddDeals, DrivesDeals, CoolersDeals, CasesDeals, CacheStatus
+from endpoints import Search, DesktopDeals, MemoryDeals, CpuDeals, GpuDeals, LaptopDeals, MotherboardDeals, PsuDeals, SsdDeals, HddDeals, DrivesDeals, CoolersDeals, CasesDeals, CacheStatus, PriceHistory
 from services import start_deals_refresh, stream_category_gen, VALID_STORE_IDS, VALID_CATEGORIES, rate_limit_check
 
 app = Flask(__name__)
@@ -22,6 +22,7 @@ api.add_resource(DrivesDeals, '/deals/drives')
 api.add_resource(CoolersDeals, '/deals/coolers')
 api.add_resource(CasesDeals, '/deals/cases')
 api.add_resource(CacheStatus, '/status')
+api.add_resource(PriceHistory, '/history/<string:item_code>')
 
 @app.route('/deals/stream')
 def deals_stream():

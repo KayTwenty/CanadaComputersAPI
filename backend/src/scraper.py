@@ -18,7 +18,7 @@ from urllib.parse import quote_plus
 import httpx
 from bs4 import BeautifulSoup
 
-# Constants
+# ── Constants ──────────────────────────────────────────────────────────────────
 MAX_PAGES = 10
 DESKTOP_ITEM_CODE_RE = re.compile(r'^RT|^DT', re.IGNORECASE)
 
@@ -43,7 +43,8 @@ _HTTP_CLIENT = httpx.Client(
     follow_redirects=True,
 )
 
-# HTTP fetching
+
+# ── HTTP fetching ──────────────────────────────────────────────────────────────
 def fetch_page(url: str, fast: bool = False, retries: int = 3) -> str:
     """Fetch a URL via the shared HTTP/2 keep-alive client with retry + backoff."""
     time.sleep(random.uniform(0.1, 0.3) if fast else random.uniform(0.4, 1.0))
@@ -66,7 +67,8 @@ def fetch_page(url: str, fast: bool = False, retries: int = 3) -> str:
                 time.sleep(backoff)
     raise last_exc  # type: ignore[misc]
 
-# HTML parsing helpers
+
+# ── HTML parsing helpers ───────────────────────────────────────────────────────
 def _parse_product(product, store_id=None, on_sale_only: bool = True,
                    extra_fields: dict | None = None) -> dict | None:
     """Parse a single <article class="product-miniature"> element.
@@ -126,6 +128,7 @@ def _parse_product(product, store_id=None, on_sale_only: bool = True,
         item.update(extra_fields)
     return item
 
+
 def _savings_dollars(p: dict) -> float:
     """Sort key: dollar savings descending."""
     try:
@@ -136,7 +139,8 @@ def _savings_dollars(p: dict) -> float:
     except (ValueError, AttributeError):
         return 0.0
 
-# Generic category scraper
+
+# ── Generic category scraper ───────────────────────────────────────────────────
 def _scrape_sale_items(base_url: str, store_id=None) -> dict:
     """Scrape all on-sale products from a paginated CC category page.
     Returns {'products': [...]} sorted by dollar savings descending."""
@@ -165,7 +169,8 @@ def _scrape_sale_items(base_url: str, store_id=None) -> dict:
     output['products'].sort(key=_savings_dollars, reverse=True)
     return output
 
-# Product search
+
+# ── Product search ─────────────────────────────────────────────────────────────
 def product_search(search_string: str, low, high) -> dict:
     """Full-text product search across Canada Computers, with optional price range."""
     output: dict = {'products': []}

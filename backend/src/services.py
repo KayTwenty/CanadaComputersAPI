@@ -9,6 +9,7 @@ from cache import (
     VALID_STORE_IDS,
     VALID_CATEGORIES,
     rate_limit_check,
+    get_price_history,
 )
 from scraper import product_search
 from categories import (
@@ -30,6 +31,7 @@ from categories import (
 
 __all__ = [
     'cache_status', 'VALID_STORE_IDS', 'VALID_CATEGORIES', 'rate_limit_check',
+    'get_price_history',
     'product_search',
     'start_deals_refresh', 'stream_category_gen',
     'get_cached_desktop_deals', 'get_cached_memory_deals', 'get_cached_cpu_deals',

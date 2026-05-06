@@ -119,7 +119,7 @@ export default function HomeContent() {
                         {freshestAge && (
                             <span className="hidden sm:inline-flex items-center gap-1 text-[11px] text-zinc-500">
                                 <TbClock size={12} />
-                                <span>Updated {freshestAge}</span>
+                                <span>{freshestAge}</span>
                             </span>
                         )}
                     </div>
@@ -240,7 +240,7 @@ export default function HomeContent() {
                                         {age && (
                                             <span className="hidden sm:inline-flex items-center gap-1 text-[11px] text-slate-400 mt-0.5">
                                                 <TbRefresh size={10} />
-                                                Updated {age}
+                                                {age}
                                             </span>
                                         )}
                                     </div>

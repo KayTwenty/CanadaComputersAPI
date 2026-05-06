@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { TbTag, TbWorld, TbBuildingStore, TbX, TbRefresh, TbPercentage, TbChevronDown } from 'react-icons/tb';
 import ShareButton from './ShareButton';
 import FavoriteButton from './FavoriteButton';
+import PriceHistorySparkline from './PriceHistorySparkline';
 import { useLastUpdated } from '../hooks/useLastUpdated';
 
 interface Product {
@@ -566,6 +567,9 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
                                             </div>
                                         )}
                                     </div>
+
+                                    {/* Price history sparkline (lazy-loaded when card enters viewport) */}
+                                    <PriceHistorySparkline itemCode={product.item_code} currentPrice={sale} />
 
                                     <div className="flex items-center gap-1.5 mt-auto pt-2.5 border-t border-slate-100">
                                         <span

@@ -41,7 +41,7 @@ from scraper import (
 
 _PRELOAD_WORKERS = 4  # parallel store scrapers
 
-# Category URL lists
+# ── Category URL lists ─────────────────────────────────────────────────────────
 _LAPTOP_URLS = [
     ('https://www.canadacomputers.com/en/98/windows-laptops',      'Windows'),
     ('https://www.canadacomputers.com/en/93/business-laptops',     'Business'),
@@ -63,7 +63,8 @@ _CASES_URLS = [
     ('https://www.canadacomputers.com/en/1387/small-form-factor-mini-itx-cases', 'ITX/mATX'),
 ]
 
-# Generic multi-URL helpers
+
+# ── Generic multi-URL helpers ──────────────────────────────────────────────────
 def _multi_url_deals(url_type_list: list, type_field: str, store_id=None) -> dict:
     """Scrape multiple sub-category URLs, tagging each product with type_field."""
     combined: list = []
@@ -74,6 +75,7 @@ def _multi_url_deals(url_type_list: list, type_field: str, store_id=None) -> dic
         combined.extend(result['products'])
     combined.sort(key=_savings_dollars, reverse=True)
     return {'products': combined}
+
 
 def _stream_typed_gen(url_type_list: list, type_field: str,
                       cache_key: str, store_key_prefix: str,
@@ -138,7 +140,8 @@ def _stream_typed_gen(url_type_list: list, type_field: str,
         if global_products:
             yield global_products
 
-# Simple single-URL categories
+
+# ── Simple single-URL categories ───────────────────────────────────────────────
 def memory_deals(store_id=None) -> dict:
     return _scrape_sale_items('https://www.canadacomputers.com/en/1009/memory', store_id)
 
@@ -160,7 +163,8 @@ def ssd_deals(store_id=None) -> dict:
 def hdd_deals(store_id=None) -> dict:
     return _scrape_sale_items('https://www.canadacomputers.com/en/895/desktop-internal-hard-drives', store_id)
 
-# Desktop (special: item-code filter)
+
+# ── Desktop (special: item-code filter) ───────────────────────────────────────
 def desktop_deals(store_id=None) -> dict:
     """Scrape on-sale desktop computers, filtered to RT/DT item codes."""
     output: dict = {'products': []}
@@ -192,7 +196,8 @@ def desktop_deals(store_id=None) -> dict:
     output['products'].sort(key=_savings_dollars, reverse=True)
     return output
 
-# Multi-URL categories
+
+# ── Multi-URL categories ───────────────────────────────────────────────────────
 def laptop_deals(store_id=None) -> dict:
     return _multi_url_deals(_LAPTOP_URLS, 'laptop_type', store_id)
 
@@ -205,7 +210,8 @@ def coolers_deals(store_id=None) -> dict:
 def cases_deals(store_id=None) -> dict:
     return _multi_url_deals(_CASES_URLS, 'case_type', store_id)
 
-# Cached getters
+
+# ── Cached getters ─────────────────────────────────────────────────────────────
 def get_cached_desktop_deals(store_id=None) -> dict:
     store_key = _ALL_STORES_KEY if store_id is None else str(store_id)
     ttl       = _CACHE_TTL if store_id is None else _STORE_CACHE_TTL
@@ -225,6 +231,7 @@ def get_cached_desktop_deals(store_id=None) -> dict:
         if result['products']:
             _cache_set(store_key, result['products'])
         return result
+
 
 def get_cached_memory_deals(store_id=None) -> dict:
     sk = _MEMORY_CACHE_KEY if store_id is None else f'mem_{store_id}'
@@ -281,7 +288,8 @@ def get_cached_cases_deals(store_id=None) -> dict:
     return _get_or_scrape(_CASES_CACHE_KEY, sk, _CASES_CACHE_TTL,
                           cases_deals, 'cases', store_id)
 
-# Store preloading
+
+# ── Store preloading ───────────────────────────────────────────────────────────
 def _preload_one_store(store_id: int) -> bool:
     """Scrape and cache a single store. Returns True if newly cached."""
     store_key = str(store_id)
@@ -294,6 +302,7 @@ def _preload_one_store(store_id: int) -> bool:
             _cache_set(store_key, result['products'])
             return True
         return False
+
 
 def _refresh_store_locations() -> None:
     """Pre-scrape every store location that isn't already cached."""
@@ -315,7 +324,8 @@ def _refresh_store_locations() -> None:
                 print(f'[deals] Store {sid} pre-load failed: {e}')
     print(f'[deals] Pre-loaded {loaded}/{len(to_scrape)} store location(s).')
 
-# Streaming generators
+
+# ── Streaming generators ───────────────────────────────────────────────────────
 def _stream_sale_items_gen(base_url: str, store_id, store_cache_key: str, ttl: float,
                            scrape_fn=None, label: str = 'stream',
                            global_cache_key: str | None = None,
@@ -374,6 +384,7 @@ def _stream_sale_items_gen(base_url: str, store_id, store_cache_key: str, ttl: f
         if global_products:
             yield global_products
 
+
 def _stream_desktop_deals_gen(store_id=None, on_sale_only: bool = True):
     """Generator: yields desktop deal page-batches (RT/DT item codes only)."""
     base_store_key = _ALL_STORES_KEY if store_id is None else str(store_id)
@@ -429,6 +440,7 @@ def _stream_desktop_deals_gen(store_id=None, on_sale_only: bool = True):
         global_products, _ = _cache_get_with_age(global_key)
         if global_products:
             yield global_products
+
 
 def stream_category_gen(category: str, store_id=None, on_sale_only: bool = True):
     """Public entry point: yield product batches for the given category."""
@@ -526,7 +538,8 @@ def stream_category_gen(category: str, store_id=None, on_sale_only: bool = True)
             _CASES_CACHE_TTL, cases_deals,
             store_id, on_sale_only)
 
-# Background warm-up loop
+
+# ── Background warm-up loop ────────────────────────────────────────────────────
 def _background_loop() -> None:
     """
     Keeps all global caches warm via proactive stale-while-revalidate:
@@ -561,6 +574,7 @@ def _background_loop() -> None:
         for args in _JOBS:
             t = threading.Thread(target=_bg_refresh, args=args, daemon=True)
             t.start()
+
 
 def start_deals_refresh() -> None:
     """Start the background cache warm-up loop in a daemon thread."""

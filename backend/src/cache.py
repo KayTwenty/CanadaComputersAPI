@@ -66,6 +66,7 @@ _db_lock = threading.Lock()
 
 def _db_connect():
     conn = sqlite3.connect(_DB_PATH)
+    conn.execute('PRAGMA journal_mode=WAL')  # allow concurrent readers during writes
     conn.execute('''
         CREATE TABLE IF NOT EXISTS deals_cache (
             store_key  TEXT PRIMARY KEY,
@@ -73,6 +74,19 @@ def _db_connect():
             scraped_at REAL NOT NULL
         )
     ''')
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS price_history (
+            item_code     TEXT    NOT NULL,
+            price         REAL    NOT NULL,
+            regular_price REAL    NOT NULL,
+            recorded_at   REAL    NOT NULL,
+            slot          INTEGER NOT NULL,
+            UNIQUE (item_code, slot)
+        )
+    ''')
+    conn.execute(
+        'CREATE INDEX IF NOT EXISTS idx_ph_item ON price_history (item_code, recorded_at)'
+    )
     conn.commit()
     return conn
 
@@ -109,6 +123,63 @@ def _cache_get_with_age(store_key: str):
             return json.loads(row[0]), age
     return None, None
 
+def _log_price_history(products: list) -> None:
+    """Write one price snapshot per product per 30-min slot. Called in a daemon
+    thread from _cache_set so it never blocks the main response path."""
+    now = time.time()
+    slot = int(now / 1800)  # unique integer per 30-minute window
+    rows = []
+    for p in products:
+        ic = p.get('item_code', '')
+        if not ic:
+            continue
+        try:
+            sale = float(str(p.get('price', '0')).replace('$', '').replace(',', ''))
+            reg  = float(str(p.get('regular_price', '0')).replace('$', '').replace(',', ''))
+        except (ValueError, AttributeError):
+            continue
+        if sale <= 0:
+            continue
+        rows.append((ic, sale, reg, now, slot))
+    if not rows:
+        return
+    cutoff = now - (35 * 24 * 3600)  # prune older than 35 days
+    with _db_lock:
+        conn = _db_connect()
+        try:
+            conn.executemany(
+                'INSERT OR IGNORE INTO price_history '
+                '(item_code, price, regular_price, recorded_at, slot) VALUES (?, ?, ?, ?, ?)',
+                rows,
+            )
+            conn.execute('DELETE FROM price_history WHERE recorded_at < ?', (cutoff,))
+            conn.commit()
+        finally:
+            conn.close()
+
+
+def get_price_history(item_code: str, days: int = 30) -> list:
+    """Return price snapshots for item_code over the last `days` days,
+    ordered oldest-first. Returns a list of {price, regular_price, recorded_at}."""
+    cutoff = time.time() - (days * 24 * 3600)
+    with _db_lock:
+        conn = _db_connect()
+        try:
+            rows = conn.execute(
+                'SELECT price, regular_price, recorded_at '
+                'FROM price_history '
+                'WHERE item_code = ? AND recorded_at >= ? '
+                'ORDER BY recorded_at ASC',
+                (item_code, cutoff),
+            ).fetchall()
+        finally:
+            conn.close()
+    return [
+        {'price': r[0], 'regular_price': r[1], 'recorded_at': r[2]}
+        for r in rows
+    ]
+
+
 def _cache_set(store_key: str, products: list):
     with _db_lock:
         conn = _db_connect()
@@ -120,6 +191,10 @@ def _cache_set(store_key: str, products: list):
             conn.commit()
         finally:
             conn.close()
+    # Log price history asynchronously for global (non-per-store) cache writes
+    if store_key.startswith('__'):
+        t = threading.Thread(target=_log_price_history, args=(products,), daemon=True)
+        t.start()
 
 def cache_status():
     """Return a status dict covering all cached keys."""
