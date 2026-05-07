@@ -265,15 +265,15 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
     }
 
     return (
-        <div className="flex flex-col">
+        <div className="flex flex-col min-w-0">
 
             {/* ── Sticky Filter Bar ──────────────────────────── */}
-            <div className="sticky top-17 z-30 bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.06)] -mx-4 px-4 sm:-mx-6 sm:px-6 py-3 mb-6">
+            <div className="sticky top-17 z-30 bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-[0_2px_12px_-4px_rgba(0,0,0,0.06)] -mx-4 px-4 sm:-mx-6 sm:px-6 py-3 mb-6 overflow-x-hidden">
                 <div className="flex flex-col gap-2.5">
 
                     {/* Row 1: count · toggle · sort */}
-                    <div className="flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2.5 flex-wrap min-w-0">
+                    <div className="flex items-center flex-wrap gap-x-3 gap-y-1.5">
+                        <div className="flex items-center gap-2.5 flex-wrap min-w-0 flex-1">
                             <div className="flex items-baseline gap-1.5">
                                 <span className="text-base font-extrabold text-slate-900 tabular-nums leading-none">{sortedProducts.length}</span>
                                 <span className="text-sm text-slate-500">{dealsOnly ? 'deals' : 'products'}</span>
@@ -304,7 +304,7 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
                             )}
                         </div>
 
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-2 ml-auto">
                             {/* Deals-only toggle */}
                             <button
                                 onClick={() => setDealsOnly(v => !v)}
@@ -315,7 +315,7 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
                                 }`}
                             >
                                 <TbPercentage size={13} />
-                                Deals only
+                                <span className="hidden xs:inline sm:inline">Deals only</span>
                             </button>
 
                             {/* Sort dropdown */}
@@ -326,8 +326,8 @@ export default function DealsGrid({ storeId, storeName, baseUrl = DEFAULT_BASE_U
                                     className="appearance-none text-[11px] font-semibold pl-3 pr-7 py-1.5 rounded-full border border-slate-200 bg-white text-slate-700 focus:outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-200/50 transition-all cursor-pointer hover:border-slate-300"
                                 >
                                     <option value="savings">Best Savings</option>
-                                    <option value="price-asc">Price: Low → High</option>
-                                    <option value="price-desc">Price: High → Low</option>
+                                    <option value="price-asc">Price ↑</option>
+                                    <option value="price-desc">Price ↓</option>
                                 </select>
                                 <TbChevronDown size={12} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                             </div>

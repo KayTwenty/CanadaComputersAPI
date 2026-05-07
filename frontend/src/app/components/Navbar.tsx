@@ -257,7 +257,7 @@ export default function Navbar() {
                                 </button>
 
                                 {storeOpen && (
-                                    <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden z-50">
+                                    <div className="absolute right-0 top-full mt-2 w-72 max-w-[calc(100vw-2rem)] bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden z-50">
                                         <div className="p-3 border-b border-slate-100">
                                             <button
                                                 onClick={requestLocation}

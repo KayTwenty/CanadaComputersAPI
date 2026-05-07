@@ -40,11 +40,13 @@ export default function Sparkline({ prices, width = 200, height = 32 }: Sparklin
 
     return (
         <svg
-            width={width}
+            width="100%"
             height={height}
             viewBox={`0 0 ${width} ${height}`}
+            preserveAspectRatio="none"
             fill="none"
             aria-hidden="true"
+            style={{ display: 'block' }}
         >
             <defs>
                 <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">

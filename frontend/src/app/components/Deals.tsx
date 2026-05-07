@@ -262,7 +262,7 @@ export default function Deals({
     ];
 
     return (
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-4 min-w-0">
             {/* Sort + count bar */}
             <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex items-center gap-1">
@@ -295,7 +295,7 @@ export default function Deals({
             </div>
 
             {/* Carousel */}
-            <div className="relative group/carousel">
+            <div className="relative group/carousel overflow-hidden">
                 {/* Nav arrows */}
                 <button
                     onClick={prev}

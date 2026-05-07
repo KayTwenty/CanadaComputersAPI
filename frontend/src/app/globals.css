@@ -10,6 +10,8 @@ html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  overflow-x: hidden; /* prevent any overflowing child from creating a horizontal scrollbar */
+  max-width: 100%;
 }
 
 body {
