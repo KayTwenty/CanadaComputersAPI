@@ -1,40 +1,56 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { rateLimitCheck, VALID_CATEGORIES } from '@/lib/cache';
+import { streamCategoryGen } from '@/lib/categories';
 
-// Allow long-running scrapes in production (cold cache can take several minutes)
+// Long-running scrapes on cold cache can take several minutes
 export const maxDuration = 300;
 
-const FLASK = process.env.FLASK_INTERNAL_URL ?? 'http://127.0.0.1:5000';
-
 export async function GET(request: NextRequest) {
-    const params = request.nextUrl.searchParams;
-    const category = params.get('category') ?? 'desktops';
-    const pickup = params.get('pickup');
-    const dealsOnly = params.get('deals_only');
-
-    let url = `${FLASK}/deals/stream?category=${encodeURIComponent(category)}`;
-    if (pickup) url += `&pickup=${encodeURIComponent(pickup)}`;
-    if (dealsOnly !== null) url += `&deals_only=${encodeURIComponent(dealsOnly)}`;
-
-    try {
-        // No timeout — let the Flask stream complete naturally.
-        // Flask itself handles retries and page limits; the browser will
-        // disconnect if the user navigates away.
-        const res = await fetch(url, {
-            cache: 'no-store',
-        });
-
-        if (!res.ok || !res.body) {
-            return NextResponse.json({ error: 'Failed to reach backend' }, { status: 502 });
-        }
-
-        return new Response(res.body, {
-            headers: {
-                'Content-Type': 'application/x-ndjson',
-                'Cache-Control': 'no-cache',
-                'X-Accel-Buffering': 'no',
-            },
-        });
-    } catch {
-        return NextResponse.json({ error: 'Failed to reach backend' }, { status: 502 });
+    const ip = (request.headers.get('x-forwarded-for') ?? '127.0.0.1').split(',')[0].trim();
+    if (!rateLimitCheck(ip, 1)) {
+        return NextResponse.json({ error: 'Too many requests — slow down.' }, { status: 429 });
     }
+
+    const params   = request.nextUrl.searchParams;
+    const category = params.get('category') ?? 'desktops';
+    if (!VALID_CATEGORIES.has(category)) {
+        return NextResponse.json(
+            { error: `Unknown category "${category}". Valid: ${[...VALID_CATEGORIES].sort().join(', ')}` },
+            { status: 400 },
+        );
+    }
+
+    const pickupRaw  = params.get('pickup');
+    const onSaleOnly = params.get('deals_only') !== 'false';
+    let storeId: number | null = null;
+    if (pickupRaw) {
+        const n = parseInt(pickupRaw, 10);
+        if (!isNaN(n)) storeId = n; // VALID_STORE_IDS check happens inside categories.ts
+    }
+
+    const encoder = new TextEncoder();
+    const gen     = streamCategoryGen(category, storeId, onSaleOnly);
+
+    const stream = new ReadableStream({
+        async start(controller) {
+            try {
+                for await (const batch of gen) {
+                    controller.enqueue(encoder.encode(JSON.stringify({ batch }) + '\n'));
+                }
+                controller.enqueue(encoder.encode(JSON.stringify({ done: true }) + '\n'));
+            } catch (e) {
+                controller.enqueue(encoder.encode(JSON.stringify({ error: String(e), done: true }) + '\n'));
+            } finally {
+                controller.close();
+            }
+        },
+    });
+
+    return new Response(stream, {
+        headers: {
+            'Content-Type':    'application/x-ndjson',
+            'Cache-Control':   'no-cache',
+            'X-Accel-Buffering': 'no',
+        },
+    });
 }

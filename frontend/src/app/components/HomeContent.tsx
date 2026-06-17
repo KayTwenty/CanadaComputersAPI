@@ -110,20 +110,6 @@ export default function HomeContent() {
                 <div className="absolute inset-x-0 bottom-0 h-32 bg-linear-to-b from-transparent to-slate-50/0 pointer-events-none" />
 
                 <div className="relative max-w-7xl mx-auto px-4 sm:px-6 pt-12 pb-10 sm:pt-16 sm:pb-14">
-                    {/* Eyebrow */}
-                    <div className="flex items-center gap-2 mb-5 animate-fade-up">
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-violet-500/10 border border-violet-500/30 text-violet-300">
-                            <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse-soft" />
-                            <span className="text-[10px] font-bold uppercase tracking-widest">Live Deals</span>
-                        </span>
-                        {freshestAge && (
-                            <span className="hidden sm:inline-flex items-center gap-1 text-[11px] text-zinc-500">
-                                <TbClock size={12} />
-                                <span>{freshestAge}</span>
-                            </span>
-                        )}
-                    </div>
-
                     {/* Headline */}
                     <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.05] animate-fade-up" style={{ animationDelay: '40ms' }}>
                         Canada Computers,{' '}

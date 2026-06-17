@@ -325,9 +325,8 @@ export default function Deals({
                         return (
                             <a
                                 key={product.item_code}
-                                href={product.link}
-                                target="_blank"
-                                rel="noreferrer"
+                                href={`/product/${product.item_code}`}
+                                onClick={() => { try { sessionStorage.setItem(`product:${product.item_code}`, JSON.stringify(product)); } catch {} }}
                                 className="animate-card-in snap-start flex-none rounded-2xl border border-slate-200/70 bg-white shadow-sm hover:shadow-xl hover:shadow-zinc-900/5 hover:border-violet-300/60 hover:-translate-y-1 transition-all duration-300 flex flex-col overflow-hidden group"
                                 style={{ width: cardWidth, animationDelay: `${Math.min(i * 40, 300)}ms` }}
                             >

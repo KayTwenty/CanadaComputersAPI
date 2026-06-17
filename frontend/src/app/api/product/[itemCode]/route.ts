@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPriceHistory } from '@/lib/cache';
+import { getCachedProduct } from '@/lib/cache';
 
 const ITEM_CODE_RE = /^[A-Za-z0-9\-]{1,64}$/;
 
@@ -11,6 +11,10 @@ export async function GET(
     if (!ITEM_CODE_RE.test(itemCode)) {
         return NextResponse.json({ error: 'Invalid item code' }, { status: 400 });
     }
-    const history = getPriceHistory(itemCode, 30);
-    return NextResponse.json({ item_code: itemCode, history });
+    const product = getCachedProduct(itemCode);
+    if (!product) {
+        return NextResponse.json({ error: 'Product not found', item_code: itemCode }, { status: 404 });
+    }
+    return NextResponse.json({ product, item_code: itemCode });
 }
+

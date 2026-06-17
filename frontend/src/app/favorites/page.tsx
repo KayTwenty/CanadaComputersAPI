@@ -127,9 +127,8 @@ export default function FavoritesPage() {
                                 return (
                                     <a
                                         key={product.item_code}
-                                        href={product.link}
-                                        target="_blank"
-                                        rel="noreferrer"
+                                        href={`/product/${product.item_code}`}
+                                        onClick={() => { try { sessionStorage.setItem(`product:${product.item_code}`, JSON.stringify(product)); } catch {} }}
                                         className="group flex flex-col bg-white rounded-2xl border border-slate-200/70 shadow-sm hover:shadow-xl hover:shadow-zinc-900/5 hover:border-violet-300/60 hover:-translate-y-1 transition-all duration-300 overflow-hidden animate-card-in"
                                         style={{ animationDelay: `${Math.min(i * 25, 250)}ms` }}
                                     >
