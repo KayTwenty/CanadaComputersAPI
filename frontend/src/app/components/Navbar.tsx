@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import {
     TbMapPin, TbCurrentLocation, TbChevronDown, TbX, TbCheck, TbRefresh,
-    TbMenu2, TbHeart, TbFlame, TbArrowUp, TbApps,
+    TbMenu2, TbHeart, TbFlame, TbArrowUp, TbApps, TbActivity, TbUser, TbMail,
     TbDeviceDesktopAnalytics, TbDeviceLaptop,
     TbCpu2, TbPhoto, TbCpu, TbServer, TbBolt, TbWind, TbDatabase, TbBox,
 } from 'react-icons/tb';
@@ -231,6 +231,45 @@ export default function Navbar() {
                             >
                                 FAQ
                             </a>
+
+                            {/* Contact */}
+                            <a
+                                href="/contact"
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                                    isActive('/contact')
+                                        ? 'text-white bg-zinc-800'
+                                        : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
+                                }`}
+                            >
+                                <TbMail size={15} />
+                                Contact
+                            </a>
+
+                            {/* Status */}
+                            <a
+                                href="/status"
+                                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                                    isActive('/status')
+                                        ? 'text-white bg-zinc-800'
+                                        : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
+                                }`}
+                            >
+                                <TbActivity size={15} className={isActive('/status') ? 'text-emerald-400' : ''} />
+                                Status
+                            </a>
+
+                            {/* Support — stands out */}
+                            <a
+                                href="/support"
+                                className={`relative flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-bold transition-all ${
+                                    isActive('/support')
+                                        ? 'bg-linear-to-r from-violet-600 to-fuchsia-600 text-white shadow-md shadow-violet-500/30'
+                                        : 'bg-linear-to-r from-violet-600/15 to-fuchsia-600/15 border border-violet-500/30 text-violet-300 hover:from-violet-600/25 hover:to-fuchsia-600/25 hover:text-white hover:border-violet-400/50 hover:shadow-sm hover:shadow-violet-500/20'
+                                }`}
+                            >
+                                <TbBolt size={14} className="shrink-0" />
+                                Support
+                            </a>
                         </nav>
 
                         {/* Right actions */}
@@ -311,6 +350,19 @@ export default function Navbar() {
                                 )}
                             </div>
 
+                            {/* Sign In */}
+                            <a
+                                href="/signin"
+                                className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
+                                    isActive('/signin')
+                                        ? 'bg-zinc-800 text-white border-zinc-700'
+                                        : 'bg-transparent text-zinc-400 border-zinc-700 hover:text-white hover:bg-zinc-800 hover:border-zinc-600'
+                                }`}
+                            >
+                                <TbUser size={15} />
+                                <span className="hidden lg:inline">Sign In</span>
+                            </a>
+
                             {/* Hamburger (mobile/tablet) */}
                             <button
                                 onClick={() => setMobileMenuOpen(v => !v)}
@@ -376,6 +428,46 @@ export default function Navbar() {
                                     }`}
                                 >
                                     FAQ
+                                </a>
+                                <a
+                                    href="/contact"
+                                    className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                                        isActive('/contact')
+                                            ? 'text-white bg-zinc-800'
+                                            : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
+                                    }`}
+                                >
+                                    <TbMail size={15} className={isActive('/contact') ? 'text-violet-400' : 'text-zinc-500'} />
+                                    Contact
+                                </a>
+                                <a
+                                    href="/status"
+                                    className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                                        isActive('/status')
+                                            ? 'text-white bg-zinc-800'
+                                            : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
+                                    }`}
+                                >
+                                    <TbActivity size={15} className={isActive('/status') ? 'text-emerald-400' : 'text-zinc-500'} />
+                                    Status
+                                </a>
+                                <a
+                                    href="/support"
+                                    className="flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-bold bg-linear-to-r from-violet-600/15 to-fuchsia-600/15 border border-violet-500/30 text-violet-300 hover:from-violet-600/25 hover:to-fuchsia-600/25 hover:text-white transition-all col-span-2"
+                                >
+                                    <TbBolt size={15} className="text-violet-400" />
+                                    Support CCDeals
+                                </a>
+                                <a
+                                    href="/signin"
+                                    className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors col-span-2 ${
+                                        isActive('/signin')
+                                            ? 'text-white bg-zinc-800'
+                                            : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
+                                    }`}
+                                >
+                                    <TbUser size={15} className="text-zinc-500" />
+                                    Sign In
                                 </a>
                             </div>
                         </div>

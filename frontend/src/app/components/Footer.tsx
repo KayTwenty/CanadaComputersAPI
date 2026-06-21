@@ -16,6 +16,10 @@ const CATEGORIES = [
 
 const MORE_LINKS = [
     { label: 'Favourites', href: '/favorites' },
+    { label: 'Contact',    href: '/contact' },
+    { label: 'Support',    href: '/support' },
+    { label: 'Status',     href: '/status' },
+    { label: 'Sign In',    href: '/signin' },
     { label: 'FAQ',        href: '/faq' },
     { label: 'Terms',      href: '/terms' },
     { label: 'Privacy',    href: '/privacy' },

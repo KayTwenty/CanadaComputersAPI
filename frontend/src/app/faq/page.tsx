@@ -65,7 +65,7 @@ export default function FaqPage() {
                                 Frequently Asked Questions
                             </h1>
                             <p className="mt-2 text-zinc-400 text-sm sm:text-base max-w-xl animate-fade-up" style={{ animationDelay: '40ms' }}>
-                                Everything you need to know about how CCDeals works — privacy, pricing, refresh cadence and more.
+                                Everything you need to know about how CCDeals works. Privacy, pricing, refresh cadence and more.
                             </p>
 
                             {/* Meta strip */}
@@ -94,24 +94,6 @@ export default function FaqPage() {
                         {FAQS.map((item, idx) => (
                             <Item key={item.q} q={item.q} a={item.a} idx={idx} />
                         ))}
-                    </div>
-
-                    {/* Contact CTA */}
-                    <div className="mt-10 relative overflow-hidden rounded-2xl bg-zinc-950 text-white px-6 py-7 text-center">
-                        <div className="absolute inset-0 bg-grid pointer-events-none opacity-50" />
-                        <div className="absolute inset-0 bg-spotlight pointer-events-none" />
-                        <div className="relative">
-                            <p className="text-sm font-bold text-white">Still have a question?</p>
-                            <p className="text-xs text-zinc-400 mt-1 mb-4">Reach out and the developer will get back to you.</p>
-                            <a
-                                href="https://antton.ca"
-                                target="_blank"
-                                rel="noreferrer"
-                                className="inline-flex items-center gap-1.5 text-[11px] font-bold text-white bg-linear-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 px-4 py-2 rounded-full shadow-lg shadow-violet-500/30 hover:shadow-violet-500/50 hover:scale-[1.02] transition-all"
-                            >
-                                Contact the developer
-                            </a>
-                        </div>
                     </div>
                 </div>
             </div>

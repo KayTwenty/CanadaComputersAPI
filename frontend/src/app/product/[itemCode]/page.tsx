@@ -1,14 +1,17 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
     TbArrowLeft, TbExternalLink, TbWorld, TbBuildingStore, TbTag,
     TbFlame, TbTrendingDown, TbTrendingUp, TbChartLine, TbClock,
+    TbSearch, TbLoader2, TbAlertCircle, TbCheck, TbChevronDown,
 } from 'react-icons/tb';
 import PriceChart from '../../components/PriceChart';
 import FavoriteButton from '../../components/FavoriteButton';
 import ShareButton from '../../components/ShareButton';
+import { useStore } from '../../contexts/StoreContext';
+import { STORES } from '../../lib/stores';
 
 interface Product {
     title: string;
@@ -74,15 +77,65 @@ function SkeletonBox({ className }: { className: string }) {
     return <div className={`bg-zinc-800/50 rounded animate-pulse ${className}`} />;
 }
 
+// ── Store stock check types ──────────────────────────────────────────────────
+interface StockResult {
+    online_availability: string;
+    instore_availability: string;
+}
+type StockState = 'idle' | 'loading' | 'done' | 'error';
+
 export default function ProductPage() {
     const params = useParams<{ itemCode: string }>();
     const router = useRouter();
     const itemCode = params.itemCode;
+    const { storeId: globalStoreId } = useStore();
 
     const [product, setProduct] = useState<Product | null>(null);
     const [history, setHistory] = useState<HistoryPoint[]>([]);
     const [loading, setLoading] = useState(true);
     const [notFound, setNotFound] = useState(false);
+
+    // Store stock checker state
+    const [checkStoreId, setCheckStoreId] = useState<number | null>(null);
+    const [stockState, setStockState] = useState<StockState>('idle');
+    const [stockResult, setStockResult] = useState<StockResult | null>(null);
+    const [storePickerOpen, setStorePickerOpen] = useState(false);
+    const [storeSearch, setStoreSearch] = useState('');
+    const storePickerRef = useRef<HTMLDivElement>(null);
+
+    // Initialise checkStoreId from global store once mounted
+    useEffect(() => {
+        if (checkStoreId === null && globalStoreId !== null) {
+            setCheckStoreId(globalStoreId);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [globalStoreId]);
+
+    // Close store picker on outside click
+    useEffect(() => {
+        function onPointerDown(e: PointerEvent) {
+            if (storePickerRef.current && !storePickerRef.current.contains(e.target as Node)) {
+                setStorePickerOpen(false);
+            }
+        }
+        document.addEventListener('pointerdown', onPointerDown);
+        return () => document.removeEventListener('pointerdown', onPointerDown);
+    }, []);
+
+    // Live stock check whenever checkStoreId changes
+    useEffect(() => {
+        if (!itemCode || checkStoreId === null) return;
+        setStockState('loading');
+        setStockResult(null);
+        fetch(`/api/stock/${encodeURIComponent(itemCode)}?storeId=${checkStoreId}`)
+            .then(r => r.json())
+            .then(d => {
+                if (d.error) { setStockState('error'); return; }
+                setStockResult(d as StockResult);
+                setStockState('done');
+            })
+            .catch(() => setStockState('error'));
+    }, [itemCode, checkStoreId]);
 
     useEffect(() => {
         if (!itemCode) return;
@@ -296,7 +349,9 @@ export default function ProductPage() {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
 
                         {/* Image card */}
-                        <div className="relative bg-white rounded-2xl border border-slate-200/70 shadow-sm flex items-center justify-center min-h-72 sm:min-h-96 p-8 overflow-hidden animate-fade-up">
+                        <div className="group relative bg-white rounded-2xl border border-slate-200/70 shadow-sm flex items-center justify-center min-h-72 sm:min-h-96 p-8 overflow-hidden animate-fade-up">
+                            {/* soft radial backdrop */}
+                            <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_42%,rgba(124,58,237,0.07),transparent_70%)] pointer-events-none" />
                             {pct > 0 && (
                                 <div className="absolute top-4 right-4 z-10 inline-flex items-center bg-linear-to-br from-rose-500 to-rose-600 text-white text-sm font-extrabold px-3 py-1 rounded-xl shadow-md shadow-rose-500/30">
                                     −{pct}%
@@ -307,7 +362,7 @@ export default function ProductPage() {
                                 <img
                                     src={product.image_url}
                                     alt={product.title}
-                                    className="object-contain max-h-72 sm:max-h-80 max-w-full drop-shadow-lg"
+                                    className="relative object-contain max-h-72 sm:max-h-80 max-w-full drop-shadow-lg transition-transform duration-500 ease-out group-hover:scale-105"
                                     referrerPolicy="no-referrer"
                                     onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                 />
@@ -338,6 +393,28 @@ export default function ProductPage() {
                                         Save ${savingsAmt} &nbsp;·&nbsp; {pct}% off
                                     </span>
                                 )}
+
+                                {/* Price-position bar (where current sits in its 30-day range) */}
+                                {low30 !== null && high30 !== null && high30 > low30 && (
+                                    <div className="mt-1">
+                                        <div className="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wide mb-1.5">
+                                            <span>${low30.toFixed(0)} low</span>
+                                            <span>30-day range</span>
+                                            <span>${high30.toFixed(0)} high</span>
+                                        </div>
+                                        <div className="relative h-2 rounded-full bg-linear-to-r from-emerald-400 via-amber-300 to-rose-400">
+                                            <div
+                                                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-white border-2 border-slate-900 shadow-md"
+                                                style={{ left: `${Math.max(0, Math.min(100, ((sale - low30) / (high30 - low30)) * 100))}%` }}
+                                            />
+                                        </div>
+                                        <p className="mt-1.5 text-[11px] text-slate-500">
+                                            {isAllTimeLow
+                                                ? <span className="font-bold text-emerald-600">At its lowest price in 30 days.</span>
+                                                : <>Currently <span className="font-bold text-slate-700">${(sale - low30).toFixed(2)}</span> above the 30-day low.</>}
+                                        </p>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="border-t border-slate-100" />
@@ -345,6 +422,8 @@ export default function ProductPage() {
                             {/* Availability */}
                             <div className="flex flex-col gap-3">
                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Availability</p>
+
+                                {/* Online availability (from cache) */}
                                 <div className="flex items-start gap-3">
                                     <span className={`shrink-0 w-8 h-8 rounded-xl flex items-center justify-center ${
                                         onlineAvail ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'
@@ -358,18 +437,111 @@ export default function ProductPage() {
                                         </p>
                                     </div>
                                 </div>
-                                <div className="flex items-start gap-3">
-                                    <span className={`shrink-0 w-8 h-8 rounded-xl flex items-center justify-center ${
-                                        instoreAvail ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'
-                                    }`}>
-                                        <TbBuildingStore size={16} />
-                                    </span>
-                                    <div className="min-w-0">
-                                        <p className="text-sm font-semibold text-slate-700">In-Store</p>
-                                        <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
-                                            {product.instore_availability || 'Status unavailable'}
-                                        </p>
+
+                                {/* ── Live in-store stock checker ── */}
+                                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5 flex flex-col gap-3">
+                                    <div className="flex items-center justify-between gap-2">
+                                        <div className="flex items-center gap-2 min-w-0">
+                                            <span className={`shrink-0 w-7 h-7 rounded-lg flex items-center justify-center ${
+                                                stockState === 'done' && isAvailable(stockResult?.instore_availability ?? '')
+                                                    ? 'bg-emerald-50 text-emerald-600'
+                                                    : stockState === 'done'
+                                                    ? 'bg-slate-100 text-slate-400'
+                                                    : 'bg-slate-100 text-slate-400'
+                                            }`}>
+                                                <TbBuildingStore size={14} />
+                                            </span>
+                                            <p className="text-sm font-semibold text-slate-700">In-Store Stock</p>
+                                        </div>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide shrink-0">Live check</p>
                                     </div>
+
+                                    {/* Store picker */}
+                                    <div ref={storePickerRef} className="relative">
+                                        <button
+                                            type="button"
+                                            onClick={() => setStorePickerOpen(o => !o)}
+                                            className="w-full flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 hover:border-violet-400 hover:text-violet-700 transition-colors shadow-xs"
+                                        >
+                                            <span className="flex items-center gap-1.5 min-w-0">
+                                                <TbBuildingStore size={13} className="shrink-0 text-slate-400" />
+                                                <span className="truncate font-medium">
+                                                    {checkStoreId !== null
+                                                        ? (STORES.find(s => s.id === checkStoreId)?.name ?? 'Unknown store')
+                                                        : 'Select a store'}
+                                                </span>
+                                            </span>
+                                            <TbChevronDown size={13} className={`shrink-0 text-slate-400 transition-transform ${storePickerOpen ? 'rotate-180' : ''}`} />
+                                        </button>
+
+                                        {storePickerOpen && (
+                                            <div className="absolute z-20 left-0 right-0 mt-1.5 rounded-xl border border-slate-200 bg-white shadow-xl shadow-slate-200/70 overflow-hidden">
+                                                {/* Search */}
+                                                <div className="px-2.5 pt-2.5 pb-1.5 border-b border-slate-100">
+                                                    <div className="flex items-center gap-2 rounded-lg bg-slate-50 border border-slate-200 px-2.5 py-1.5">
+                                                        <TbSearch size={13} className="shrink-0 text-slate-400" />
+                                                        <input
+                                                            autoFocus
+                                                            value={storeSearch}
+                                                            onChange={e => setStoreSearch(e.target.value)}
+                                                            placeholder="Search stores…"
+                                                            className="flex-1 text-sm bg-transparent outline-none text-slate-700 placeholder:text-slate-400"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                {/* Store list */}
+                                                <ul className="max-h-52 overflow-y-auto py-1">
+                                                    {STORES
+                                                        .filter(s => s.id !== null)
+                                                        .filter(s => s.name.toLowerCase().includes(storeSearch.toLowerCase()))
+                                                        .map(s => (
+                                                            <li key={s.id}>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        setCheckStoreId(s.id);
+                                                                        setStorePickerOpen(false);
+                                                                        setStoreSearch('');
+                                                                    }}
+                                                                    className="w-full flex items-center justify-between px-3.5 py-2 text-sm text-slate-700 hover:bg-violet-50 hover:text-violet-700 transition-colors"
+                                                                >
+                                                                    <span>{s.name}</span>
+                                                                    {checkStoreId === s.id && <TbCheck size={13} className="text-violet-600" />}
+                                                                </button>
+                                                            </li>
+                                                        ))}
+                                                </ul>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Stock result */}
+                                    {checkStoreId !== null && (
+                                        <div className={`rounded-lg px-3 py-2.5 text-sm flex items-center gap-2.5 ${
+                                            stockState === 'loading' ? 'bg-slate-100 text-slate-500' :
+                                            stockState === 'error'   ? 'bg-rose-50 text-rose-700 border border-rose-100' :
+                                            stockState === 'done' && isAvailable(stockResult?.instore_availability ?? '')
+                                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                                                : 'bg-slate-100 text-slate-600'
+                                        }`}>
+                                            {stockState === 'loading' && (
+                                                <><TbLoader2 size={15} className="shrink-0 animate-spin" />
+                                                <span className="text-xs">Checking live stock…</span></>
+                                            )}
+                                            {stockState === 'error' && (
+                                                <><TbAlertCircle size={15} className="shrink-0" />
+                                                <span className="text-xs">Couldn&apos;t fetch availability. Try again.</span></>
+                                            )}
+                                            {stockState === 'done' && stockResult && (
+                                                <>
+                                                    {isAvailable(stockResult.instore_availability)
+                                                        ? <TbCheck size={15} className="shrink-0 text-emerald-600" />
+                                                        : <TbBuildingStore size={15} className="shrink-0 text-slate-400" />}
+                                                    <span className="text-xs font-medium">{stockResult.instore_availability}</span>
+                                                </>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
 
